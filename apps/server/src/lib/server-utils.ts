@@ -6,8 +6,9 @@ import { defaultPageSize } from './utils';
 import type { HonoContext } from '../ctx';
 import { createClient } from 'dormroom';
 import { createDriver } from './driver';
-import { eq } from 'drizzle-orm';
 import { createDb } from '../db';
+import { eq } from 'drizzle-orm';
+import { EProviders } from '../types';
 import { Effect } from 'effect';
 import { env } from '../env';
 
@@ -574,6 +575,52 @@ export const getActiveConnection = async () => {
 };
 
 export const connectionToDriver = (activeConnection: typeof connection.$inferSelect) => {
+  if (activeConnection.providerId === EProviders.imap_smtp) {
+    const authConfig = activeConnection.authConfig as
+      | { username?: string | null; password?: string | null }
+      | null
+      | undefined;
+    const providerConfig = activeConnection.providerConfig as
+      | {
+          imap?: { host?: string | null; port?: number | null; secure?: boolean | null };
+          smtp?: { host?: string | null; port?: number | null; secure?: boolean | null };
+        }
+      | null
+      | undefined;
+
+    if (
+      !authConfig?.username ||
+      !authConfig?.password ||
+      !providerConfig?.imap?.host ||
+      !providerConfig?.imap?.port ||
+      !providerConfig?.smtp?.host ||
+      !providerConfig?.smtp?.port
+    ) {
+      throw new Error(`Invalid manual IMAP/SMTP connection ${JSON.stringify(activeConnection?.id)}`);
+    }
+
+    return createDriver(activeConnection.providerId, {
+      auth: {
+        userId: activeConnection.userId,
+        email: activeConnection.email,
+        username: authConfig.username,
+        password: authConfig.password,
+      },
+      config: {
+        imap: {
+          host: providerConfig.imap.host,
+          port: providerConfig.imap.port,
+          secure: Boolean(providerConfig.imap.secure),
+        },
+        smtp: {
+          host: providerConfig.smtp.host,
+          port: providerConfig.smtp.port,
+          secure: Boolean(providerConfig.smtp.secure),
+        },
+      },
+    });
+  }
+
   if (!activeConnection.accessToken || !activeConnection.refreshToken) {
     throw new Error(`Invalid connection ${JSON.stringify(activeConnection?.id)}`);
   }
@@ -607,7 +654,7 @@ export const verifyToken = async (token: string) => {
 
 
 export const resetConnection = async (connectionId: string) => {
-  const { db, conn } = createDb(env.HYPERDRIVE.connectionString);
+  const { db, conn } = createDb(env.DB);
   await db
     .update(connection)
     .set({

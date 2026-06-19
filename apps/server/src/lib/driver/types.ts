@@ -43,15 +43,37 @@ export interface IConfig {
 export type ManagerConfig = {
   auth: {
     userId: string;
-    // accountId: string;
     accessToken: string;
     refreshToken: string;
     email: string;
   };
 };
 
+export type OAuthManagerConfig = ManagerConfig;
+
+export type ManualImapSmtpManagerConfig = {
+  auth: {
+    userId: string;
+    email: string;
+    username: string;
+    password: string;
+  };
+  config: {
+    imap: {
+      host: string;
+      port: number;
+      secure: boolean;
+    };
+    smtp: {
+      host: string;
+      port: number;
+      secure: boolean;
+    };
+  };
+};
+
 export interface MailManager {
-  config: ManagerConfig;
+  config: ManagerConfig | ManualImapSmtpManagerConfig;
   getMessageAttachments(id: string): Promise<
     {
       filename: string;

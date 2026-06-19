@@ -74,7 +74,7 @@ export class SyncThreadsWorkflow extends WorkflowEntrypoint<ZeroEnv, SyncThreads
     };
 
     const setupResult = await step.do(`setup-connection-${connectionId}-${folder}`, async () => {
-      const { db, conn } = createDb(this.env.HYPERDRIVE.connectionString);
+      const { db, conn } = createDb(this.env.DB);
 
       const foundConnection = await db.query.connection.findFirst({
         where: eq(connection.id, connectionId),
@@ -153,7 +153,7 @@ export class SyncThreadsWorkflow extends WorkflowEntrypoint<ZeroEnv, SyncThreads
                 {
                   id: thread.id,
                   threadId: thread.id,
-                  providerId: 'google',
+                  providerId: foundConnection.providerId,
                   latestSender: latest.sender,
                   latestReceivedOn: normalizedReceivedOn,
                   latestSubject: latest.subject,

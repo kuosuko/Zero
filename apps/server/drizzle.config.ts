@@ -2,10 +2,13 @@ import { type Config } from 'drizzle-kit';
 
 export default {
   schema: './src/db/schema.ts',
-  dialect: 'postgresql',
+  dialect: 'sqlite',
+  driver: 'd1-http',
   dbCredentials: {
-    url: process.env.DATABASE_URL!,
+    accountId: process.env.CLOUDFLARE_ACCOUNT_ID || 'local-account',
+    databaseId: process.env.CLOUDFLARE_D1_DATABASE_ID || '00000000-0000-0000-0000-000000000001',
+    token: process.env.CLOUDFLARE_API_TOKEN || 'local-token',
   },
-  out: './src/db/migrations',
+  out: './src/db/d1-migrations',
   tablesFilter: ['mail0_*'],
 } satisfies Config;

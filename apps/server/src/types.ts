@@ -1,9 +1,11 @@
 import type { Context } from 'hono';
+import type { ZeroEnv as Env } from './env';
 import { z } from 'zod';
 
 export enum EProviders {
   'google' = 'google',
   'microsoft' = 'microsoft',
+  'imap_smtp' = 'imap_smtp',
 }
 
 export interface ISubscribeBatch {

@@ -1,17 +1,17 @@
-import {
-  pgTableCreator,
-  text,
-  timestamp,
-  boolean,
-  integer,
-  jsonb,
-  primaryKey,
-  unique,
-  index,
-} from 'drizzle-orm/pg-core';
+import { sqliteTable, text, integer, primaryKey, index, uniqueIndex } from 'drizzle-orm/sqlite-core';
 import { defaultUserSettings } from '../lib/schemas';
+import type { ManualConnectionAuth, ManualImapSmtpConnectionConfig } from '../lib/schemas';
 
-export const createTable = pgTableCreator((name) => `mail0_${name}`);
+const timestamp = (name?: string) =>
+  name ? integer(name, { mode: 'timestamp_ms' }) : integer({ mode: 'timestamp_ms' });
+
+const boolean = (name: string) => integer(name, { mode: 'boolean' });
+
+const jsonb = (name?: string) =>
+  name ? text(name, { mode: 'json' }) : text({ mode: 'json' });
+
+const createTable = (name: string, columns: any, extra?: any) =>
+  sqliteTable(`mail0_${name}`, columns, extra);
 
 export const user = createTable('user', {
   id: text('id').primaryKey(),
@@ -41,7 +41,7 @@ export const session = createTable(
       .notNull()
       .references(() => user.id, { onDelete: 'cascade' }),
   },
-  (t) => [
+  (t: any) => [
     index('session_user_id_idx').on(t.userId),
     index('session_expires_at_idx').on(t.expiresAt),
   ],
@@ -66,7 +66,7 @@ export const account = createTable(
     createdAt: timestamp('created_at').notNull(),
     updatedAt: timestamp('updated_at').notNull(),
   },
-  (t) => [
+  (t: any) => [
     index('account_user_id_idx').on(t.userId),
     index('account_provider_user_id_idx').on(t.providerId, t.userId),
     index('account_expires_at_idx').on(t.accessTokenExpiresAt),
@@ -83,7 +83,7 @@ export const userHotkeys = createTable(
     createdAt: timestamp('created_at').notNull(),
     updatedAt: timestamp('updated_at').notNull(),
   },
-  (t) => [index('user_hotkeys_shortcuts_idx').on(t.shortcuts)],
+  (t: any) => [index('user_hotkeys_shortcuts_idx').on(t.shortcuts)],
 );
 
 export const verification = createTable(
@@ -96,7 +96,7 @@ export const verification = createTable(
     createdAt: timestamp('created_at'),
     updatedAt: timestamp('updated_at'),
   },
-  (t) => [
+  (t: any) => [
     index('verification_identifier_idx').on(t.identifier),
     index('verification_expires_at_idx').on(t.expiresAt),
   ],
@@ -112,7 +112,7 @@ export const earlyAccess = createTable(
     isEarlyAccess: boolean('is_early_access').notNull().default(false),
     hasUsedTicket: text('has_used_ticket').default(''),
   },
-  (t) => [index('early_access_is_early_access_idx').on(t.isEarlyAccess)],
+  (t: any) => [index('early_access_is_early_access_idx').on(t.isEarlyAccess)],
 );
 
 export const connection = createTable(
@@ -127,14 +127,16 @@ export const connection = createTable(
     picture: text('picture'),
     accessToken: text('access_token'),
     refreshToken: text('refresh_token'),
+    authConfig: jsonb('auth_config').$type<ManualConnectionAuth | null>(),
+    providerConfig: jsonb('provider_config').$type<ManualImapSmtpConnectionConfig | null>(),
     scope: text('scope').notNull(),
-    providerId: text('provider_id').$type<'google' | 'microsoft'>().notNull(),
+    providerId: text('provider_id').notNull(),
     expiresAt: timestamp('expires_at').notNull(),
     createdAt: timestamp('created_at').notNull(),
     updatedAt: timestamp('updated_at').notNull(),
   },
-  (t) => [
-    unique().on(t.userId, t.email),
+  (t: any) => [
+    uniqueIndex('connection_user_email_idx').on(t.userId, t.email),
     index('connection_user_id_idx').on(t.userId),
     index('connection_expires_at_idx').on(t.expiresAt),
     index('connection_provider_id_idx').on(t.providerId),
@@ -155,7 +157,7 @@ export const summary = createTable(
     tags: text('tags'),
     suggestedReply: text('suggested_reply'),
   },
-  (t) => [
+  (t: any) => [
     index('summary_connection_id_idx').on(t.connectionId),
     index('summary_connection_id_saved_idx').on(t.connectionId, t.saved),
     index('summary_saved_idx').on(t.saved),
@@ -175,10 +177,10 @@ export const note = createTable(
     color: text('color').notNull().default('default'),
     isPinned: boolean('is_pinned').default(false),
     order: integer('order').notNull().default(0),
-    createdAt: timestamp('created_at').notNull().defaultNow(),
-    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+    createdAt: timestamp('created_at').notNull(),
+    updatedAt: timestamp('updated_at').notNull(),
   },
-  (t) => [
+  (t: any) => [
     index('note_user_id_idx').on(t.userId),
     index('note_thread_id_idx').on(t.threadId),
     index('note_user_thread_idx').on(t.userId, t.threadId),
@@ -194,14 +196,11 @@ export const userSettings = createTable(
       .notNull()
       .references(() => user.id, { onDelete: 'cascade' })
       .unique(),
-    settings: jsonb('settings')
-      .$type<typeof defaultUserSettings>()
-      .notNull()
-      .default(defaultUserSettings),
+    settings: jsonb('settings').$type<typeof defaultUserSettings>().notNull(),
     createdAt: timestamp('created_at').notNull(),
     updatedAt: timestamp('updated_at').notNull(),
   },
-  (t) => [index('user_settings_settings_idx').on(t.settings)],
+  (t: any) => [index('user_settings_settings_idx').on(t.settings)],
 );
 
 export const writingStyleMatrix = createTable(
@@ -214,10 +213,7 @@ export const writingStyleMatrix = createTable(
     // TODO: way too much pain to get this type to work,
     // revisit later
     style: jsonb().$type<unknown>().notNull(),
-    updatedAt: timestamp()
-      .defaultNow()
-      .notNull()
-      .$onUpdate(() => new Date()),
+    updatedAt: timestamp().notNull(),
   },
   (table) => {
     return [
@@ -237,7 +233,7 @@ export const jwks = createTable(
     privateKey: text('private_key').notNull(),
     createdAt: timestamp('created_at').notNull(),
   },
-  (t) => [index('jwks_created_at_idx').on(t.createdAt)],
+  (t: any) => [index('jwks_created_at_idx').on(t.createdAt)],
 );
 
 export const oauthApplication = createTable(
@@ -256,7 +252,7 @@ export const oauthApplication = createTable(
     createdAt: timestamp('created_at'),
     updatedAt: timestamp('updated_at'),
   },
-  (t) => [
+  (t: any) => [
     index('oauth_application_user_id_idx').on(t.userId),
     index('oauth_application_disabled_idx').on(t.disabled),
   ],
@@ -276,7 +272,7 @@ export const oauthAccessToken = createTable(
     createdAt: timestamp('created_at'),
     updatedAt: timestamp('updated_at'),
   },
-  (t) => [
+  (t: any) => [
     index('oauth_access_token_user_id_idx').on(t.userId),
     index('oauth_access_token_client_id_idx').on(t.clientId),
     index('oauth_access_token_expires_at_idx').on(t.accessTokenExpiresAt),
@@ -294,7 +290,7 @@ export const oauthConsent = createTable(
     updatedAt: timestamp('updated_at'),
     consentGiven: boolean('consent_given'),
   },
-  (t) => [
+  (t: any) => [
     index('oauth_consent_user_id_idx').on(t.userId),
     index('oauth_consent_client_id_idx').on(t.clientId),
     index('oauth_consent_given_idx').on(t.consentGiven),
@@ -314,11 +310,11 @@ export const emailTemplate = createTable(
     to: jsonb('to'),
     cc: jsonb('cc'),
     bcc: jsonb('bcc'),
-    createdAt: timestamp('created_at').notNull().defaultNow(),
-    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+    createdAt: timestamp('created_at').notNull(),
+    updatedAt: timestamp('updated_at').notNull(),
   },
-  (t) => [
+  (t: any) => [
     index('idx_mail0_email_template_user_id').on(t.userId),
-    unique('mail0_email_template_user_id_name_unique').on(t.userId, t.name),
+    uniqueIndex('mail0_email_template_user_id_name_unique').on(t.userId, t.name),
   ],
 );

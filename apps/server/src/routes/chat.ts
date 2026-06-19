@@ -386,7 +386,7 @@ export class ZeroAgent extends AIChatAgent<typeof env> {
 
   public async setupAuth(connectionId: string) {
     if (!this.driver) {
-      const { db, conn } = createDb(env.HYPERDRIVE.connectionString);
+      const { db, conn } = createDb(env.DB);
       const _connection = await db.query.connection.findFirst({
         where: eq(connection.id, connectionId),
       });
@@ -1180,7 +1180,7 @@ export class ZeroMCP extends McpAgent<typeof env, {}, { userId: string }> {
   }
 
   async init(): Promise<void> {
-    const { db, conn } = createDb(env.HYPERDRIVE.connectionString);
+    const { db, conn } = createDb(env.DB);
     const _connection = await db.query.connection.findFirst({
       where: eq(connection.userId, this.props.userId),
     });

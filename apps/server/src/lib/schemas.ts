@@ -115,6 +115,33 @@ export const userSettingsSchema = z.object({
   animations: z.boolean().default(false),
 });
 
+export const manualMailServerSchema = z.object({
+  host: z.string().min(1),
+  port: z.number().int().min(1).max(65535),
+  secure: z.boolean(),
+});
+
+export const manualConnectionAuthSchema = z.object({
+  username: z.string().min(1),
+  password: z.string().min(1),
+});
+
+export const manualImapSmtpConnectionConfigSchema = z.object({
+  imap: manualMailServerSchema,
+  smtp: manualMailServerSchema,
+});
+
+export const manualImapSmtpConnectionInputSchema = z.object({
+  email: z.string().email(),
+  name: z.string().min(1).optional(),
+  auth: manualConnectionAuthSchema,
+  config: manualImapSmtpConnectionConfigSchema,
+});
+
+export type ManualConnectionAuth = z.infer<typeof manualConnectionAuthSchema>;
+export type ManualImapSmtpConnectionConfig = z.infer<typeof manualImapSmtpConnectionConfigSchema>;
+export type ManualImapSmtpConnectionInput = z.infer<typeof manualImapSmtpConnectionInputSchema>;
+
 export type UserSettings = z.infer<typeof userSettingsSchema>;
 
 export const defaultUserSettings: UserSettings = {

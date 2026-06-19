@@ -261,7 +261,7 @@ export class WorkflowRunner extends DurableObject<ZeroEnv> {
         historyProcessingKey,
       );
 
-      const { db, conn } = createDb(this.env.HYPERDRIVE.connectionString);
+      const { db, conn } = createDb(this.env.DB);
 
       const foundConnection = yield* Effect.tryPromise({
         try: async () => {
@@ -571,7 +571,7 @@ export class WorkflowRunner extends DurableObject<ZeroEnv> {
 
       if (providerId === EProviders.google) {
         yield* Console.log('[THREAD_WORKFLOW] Processing Google provider workflow');
-        const { db, conn } = createDb(this.env.HYPERDRIVE.connectionString);
+        const { db, conn } = createDb(this.env.DB);
 
         const foundConnection = yield* Effect.tryPromise({
           try: async () => {
@@ -729,7 +729,7 @@ export class WorkflowRunner extends DurableObject<ZeroEnv> {
 
       if (providerId === EProviders.google) {
         console.log('[THREAD_WORKFLOW] Processing Google provider workflow');
-        const { db, conn } = createDb(this.env.HYPERDRIVE.connectionString);
+        const { db, conn } = createDb(this.env.DB);
 
         let foundConnection;
         try {

@@ -151,12 +151,12 @@
       "observability": {
         "enabled": true,
       },
-      "hyperdrive": [
+      "d1_databases": [
         {
-          "binding": "HYPERDRIVE",
-          "id": "57834ddb6716440496c8836f6d99bc9a",
-          "localConnectionString": "postgresql://postgres:postgres@localhost:5432/zerodotemail",
-        },
+          "binding": "DB",
+          "database_name": "zero-local",
+          "database_id": "00000000-0000-0000-0000-000000000001"
+        }
       ],
       "vars": {
         "NODE_ENV": "local",
@@ -381,12 +381,12 @@
       "observability": {
         "enabled": true,
       },
-      "hyperdrive": [
+      "d1_databases": [
         {
-          "binding": "HYPERDRIVE",
-          "id": "57834ddb6716440496c8836f6d99bc9a",
-          "localConnectionString": "postgresql://postgres:postgres@localhost:5432/zerodotemail",
-        },
+          "binding": "DB",
+          "database_name": "zero-staging",
+          "database_id": "00000000-0000-0000-0000-000000000002"
+        }
       ],
       "vars": {
         "NODE_ENV": "development",
@@ -480,12 +480,12 @@
       "observability": {
         "enabled": true,
       },
-      "hyperdrive": [
+      "d1_databases": [
         {
-          "binding": "HYPERDRIVE",
-          "id": "b1be316b45fb439a9e54b74ecc20aa21",
-          "localConnectionString": "postgresql://postgres:postgres@localhost:5432/zerodotemail",
-        },
+          "binding": "DB",
+          "database_name": "zero-production",
+          "database_id": "00000000-0000-0000-0000-000000000003"
+        }
       ],
       "durable_objects": {
         "bindings": [

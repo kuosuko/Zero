@@ -144,19 +144,21 @@ export default function ConnectionsPage() {
                               {m['pages.settings.connections.disconnected']()}
                             </Badge>
                           </div>
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            onClick={async () => {
-                              await authClient.linkSocial({
-                                provider: connection.providerId,
-                                callbackURL: `${window.location.origin}/settings/connections`,
-                              });
-                            }}
-                          >
-                            <Unplug className="size-4" />
-                            {m['pages.settings.connections.reconnect']()}
-                          </Button>
+                          {connection.providerId !== 'imap_smtp' ? (
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              onClick={async () => {
+                                await authClient.linkSocial({
+                                  provider: connection.providerId,
+                                  callbackURL: `${window.location.origin}/settings/connections`,
+                                });
+                              }}
+                            >
+                              <Unplug className="size-4" />
+                              {m['pages.settings.connections.reconnect']()}
+                            </Button>
+                          ) : null}
                         </>
                       ) : null}
                       <Dialog>

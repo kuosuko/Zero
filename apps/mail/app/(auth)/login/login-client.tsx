@@ -1,7 +1,7 @@
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Suspense, useEffect, useState, type ReactNode } from 'react';
 import type { EnvVarInfo } from '@zero/server/auth-providers';
-import { Google, Microsoft } from '@/components/icons/icons';
+import { Google, Mail, Microsoft } from '@/components/icons/icons';
 import ErrorMessage from '@/app/(auth)/login/error-message';
 import { Button } from '@/components/ui/button';
 import { TriangleAlert } from 'lucide-react';
@@ -42,6 +42,9 @@ const getProviderIcon = (providerId: string, className?: string): ReactNode => {
 
     case 'microsoft':
       return <Microsoft className={defaultClass} />;
+
+    case 'local_dev':
+      return <Mail className={defaultClass} />;
 
     case 'zero':
       return (

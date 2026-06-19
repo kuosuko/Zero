@@ -18,7 +18,7 @@ import { dubAnalytics } from '@dub/better-auth';
 import { defaultUserSettings } from './schemas';
 import { disableBrainFunction } from './brain';
 import { APIError } from 'better-auth/api';
-import { type EProviders } from '../types';
+import { EProviders } from '../types';
 import { createDriver } from './driver';
 import { Autumn } from 'autumn-js';
 import { createDb } from '../db';
@@ -158,7 +158,8 @@ const connectionHandlerHook = async (account: Account) => {
 };
 
 export const createAuth = () => {
-  const twilioClient = twilio();
+  const twilioClient =
+    env.TWILIO_ACCOUNT_SID && env.TWILIO_AUTH_TOKEN && env.TWILIO_PHONE_NUMBER ? twilio() : null;
   const dub = new Dub();
 
   return betterAuth({
@@ -173,6 +174,12 @@ export const createAuth = () => {
       bearer(),
       phoneNumber({
         sendOTP: async ({ code, phoneNumber }) => {
+          if (!twilioClient) {
+            throw new APIError('INTERNAL_SERVER_ERROR', {
+              message: 'Phone verification is not configured for this environment.',
+            });
+          }
+
           await twilioClient.messages
             .send(phoneNumber, `Your verification code is: ${code}, do not share it with anyone.`)
             .catch((error) => {
@@ -216,11 +223,17 @@ export const createAuth = () => {
           const revokedAccounts = (
             await Promise.allSettled(
               connections.map(async (connection) => {
-                if (!connection.accessToken || !connection.refreshToken) return false;
                 await disableBrainFunction({
                   id: connection.id,
                   providerId: connection.providerId as EProviders,
                 });
+
+                if (connection.providerId === EProviders.imap_smtp) {
+                  return true;
+                }
+
+                if (!connection.accessToken || !connection.refreshToken) return false;
+
                 const driver = createDriver(connection.providerId, {
                   auth: {
                     accessToken: connection.accessToken,
@@ -328,9 +341,9 @@ export const createAuth = () => {
 
 const createAuthConfig = () => {
   const cache = redis();
-  const { db } = createDb(env.HYPERDRIVE.connectionString);
+  const { db } = createDb(env.DB);
   return {
-    database: drizzleAdapter(db, { provider: 'pg' }),
+    database: drizzleAdapter(db, { provider: 'sqlite' }),
     secondaryStorage: {
       get: async (key: string) => {
         const value = await cache.get(key);

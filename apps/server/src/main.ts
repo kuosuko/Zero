@@ -50,6 +50,7 @@ import { createAuth } from './lib/auth';
 import { aiRouter } from './routes/ai';
 import { appRouter } from './trpc';
 import { cors } from 'hono/cors';
+import { getCookie } from 'hono/cookie';
 import { Hono } from 'hono';
 
 const SENTRY_HOST = 'o4509328786915328.ingest.us.sentry.io';
@@ -150,7 +151,7 @@ export class DbRpcDO extends RpcTarget {
   async createConnection(
     providerId: EProviders,
     email: string,
-    updatingInfo: {
+    updatingInfo: Partial<typeof connection.$inferInsert> & {
       expiresAt: Date;
       scope: string;
     },
@@ -203,7 +204,7 @@ export class DbRpcDO extends RpcTarget {
 }
 
 class ZeroDB extends DurableObject<ZeroEnv> {
-  db: DB = createDb(this.env.HYPERDRIVE.connectionString).db;
+  db: DB = createDb(this.env.DB).db;
 
   async setMetaData(userId: string) {
     return new DbRpcDO(this, userId);
@@ -415,7 +416,7 @@ class ZeroDB extends DurableObject<ZeroEnv> {
     providerId: EProviders,
     email: string,
     userId: string,
-    updatingInfo: {
+    updatingInfo: Partial<typeof connection.$inferInsert> & {
       expiresAt: Date;
       scope: string;
     },
@@ -475,6 +476,7 @@ class ZeroDB extends DurableObject<ZeroEnv> {
           .set({
             numMessages: existingMatrix.numMessages + 1,
             style: newStyle,
+            updatedAt: new Date(),
           })
           .where(eq(writingStyleMatrix.connectionId, connectionId));
       } else {
@@ -486,6 +488,7 @@ class ZeroDB extends DurableObject<ZeroEnv> {
             connectionId,
             numMessages: 1,
             style: newStyle,
+            updatedAt: new Date(),
           })
           .onConflictDoNothing();
       }
@@ -623,7 +626,19 @@ const api = new Hono<HonoContext>()
     const session = await auth.api.getSession({ headers: c.req.raw.headers });
     c.set('sessionUser', session?.user);
 
-    if (c.req.header('Authorization') && !session?.user) {
+    if (!session?.user && c.env.NODE_ENV !== 'production') {
+      const devUserId = getCookie(c, 'zero-dev-user');
+      if (devUserId) {
+        const db = await getZeroDB(devUserId);
+        const devUser = await db.findUser();
+        if (devUser) {
+          c.set('sessionUser', devUser);
+        }
+      }
+    }
+
+    // If no session but Authorization header exists, try to verify bearer token
+    if (!c.var.sessionUser && c.req.header('Authorization')) {
       // Start token verification span
       const tokenSpan = TraceContext.startSpan(traceId, 'token_verification', {
         tokenPresent: true,
@@ -1157,7 +1172,7 @@ export default class Entry extends WorkerEntrypoint<ZeroEnv> {
 
   private async processExpiredSubscriptions() {
     console.log('[SCHEDULED] Checking for expired subscriptions...');
-    const { db, conn } = createDb(this.env.HYPERDRIVE.connectionString);
+    const { db, conn } = createDb(this.env.DB);
     const allAccounts = await db.query.connection.findMany({
       where: (fields, { isNotNull, and }) =>
         and(isNotNull(fields.accessToken), isNotNull(fields.refreshToken)),

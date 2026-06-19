@@ -702,7 +702,7 @@ export class ZeroDriver extends DurableObject<ZeroEnv> {
   public async setupAuth() {
     if (this.name === 'general') return;
     if (!this.driver) {
-      const { db, conn } = createDb(this.env.HYPERDRIVE.connectionString);
+      const { db, conn } = createDb(this.env.DB);
       const _connection = await db.query.connection.findFirst({
         where: eq(connection.id, this.name),
       });
@@ -986,7 +986,7 @@ export class ZeroDriver extends DurableObject<ZeroEnv> {
             {
               id: threadId,
               threadId,
-              providerId: 'google',
+              providerId: this.connection!.providerId,
               latestSender: latest.sender,
               latestReceivedOn: normalizedReceivedOn,
               latestSubject: latest.subject,
