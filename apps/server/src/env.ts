@@ -88,6 +88,8 @@ export type ZeroEnv = {
   GOOGLE_S_ACCOUNT: string;
   // 設定後可在 production 啟用 secret 把關的 dev 本地登入 (透過 ?secret=)。未設則 production 關閉 dev 登入。
   DEV_LOGIN_SECRET?: string;
+  // IMAP/SMTP 帳密 at-rest 加密金鑰 (base64 的 32 bytes)。未設則帳密以明文儲存 (本機開發)。
+  IMAP_ENCRYPTION_KEY?: string;
   AXIOM_API_TOKEN: string;
   AXIOM_DATASET: string;
   THREADS_BUCKET: R2Bucket;

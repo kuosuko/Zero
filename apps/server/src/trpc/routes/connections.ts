@@ -3,6 +3,8 @@ import { manualImapSmtpConnectionInputSchema } from '../../lib/schemas';
 import { getActiveConnection, getZeroDB } from '../../lib/server-utils';
 import { isConnectionAuthorized } from '../../lib/connection-auth';
 import { validateManualImapSmtpConnection } from '../../lib/driver/imap-smtp';
+import { encryptSecret } from '../../lib/crypto-utils';
+import { env } from '../../env';
 import { EProviders } from '../../types';
 import { Ratelimit } from '@upstash/ratelimit';
 import { TRPCError } from '@trpc/server';
@@ -61,12 +63,18 @@ export const connectionsRouter = router({
         });
       }
 
+      // 帳密以 AES-GCM 加密後才存入 D1 (連線/驗證仍用上面的明文 manualConfig)。
+      const authConfig = {
+        ...input.auth,
+        password: await encryptSecret(input.auth.password, env.IMAP_ENCRYPTION_KEY),
+      };
+
       const db = await getZeroDB(ctx.sessionUser.id);
       const [result] = await db.createConnection(EProviders.imap_smtp, input.email, {
         expiresAt: new Date('2100-01-01T00:00:00.000Z'),
         scope: 'imap smtp',
         name: input.name ?? input.email,
-        authConfig: input.auth,
+        authConfig,
         providerConfig: input.config,
       });
 

@@ -1,6 +1,8 @@
 import { ImapFlow } from 'imapflow';
 import { simpleParser } from 'mailparser';
 import { createTransport } from 'nodemailer';
+import { env } from '../../env';
+import { decryptSecret } from '../crypto-utils';
 import type { Address } from 'nodemailer/lib/mailer';
 import type {
   DeleteAllSpamResponse,
@@ -315,30 +317,40 @@ export const validateManualImapSmtpConnection = async (config: ManualImapSmtpMan
 export class ImapSmtpMailManager implements MailManager {
   config: ManualImapSmtpManagerConfig;
 
+  private resolvedPassword?: string;
+
   constructor(config: ManualImapSmtpManagerConfig) {
     this.config = config;
   }
 
-  private createTransport() {
+  // 帳密以 AES-GCM 加密存於 D1；連線前才解密 (memoized)。舊明文值會原樣回傳。
+  private async getPassword(): Promise<string> {
+    if (this.resolvedPassword === undefined) {
+      this.resolvedPassword = await decryptSecret(this.config.auth.password, env.IMAP_ENCRYPTION_KEY);
+    }
+    return this.resolvedPassword;
+  }
+
+  private async createTransport() {
     return createTransport({
       host: this.config.config.smtp.host,
       port: this.config.config.smtp.port,
       secure: this.config.config.smtp.secure,
       auth: {
         user: this.config.auth.username,
-        pass: this.config.auth.password,
+        pass: await this.getPassword(),
       },
     });
   }
 
-  private createImapClient() {
+  private async createImapClient() {
     return new ImapFlow({
       host: this.config.config.imap.host,
       port: this.config.config.imap.port,
       secure: this.config.config.imap.secure,
       auth: {
         user: this.config.auth.username,
-        pass: this.config.auth.password,
+        pass: await this.getPassword(),
       },
       disableAutoEnable: true,
       logger: false,
@@ -390,7 +402,7 @@ export class ImapSmtpMailManager implements MailManager {
   }
 
   private async connectImap() {
-    const client = this.createImapClient();
+    const client = await this.createImapClient();
     await client.connect();
     return client;
   }
@@ -687,7 +699,7 @@ export class ImapSmtpMailManager implements MailManager {
   }
 
   async create(data: IOutgoingMessage): Promise<{ id?: string | null }> {
-    const transport = this.createTransport();
+    const transport = await this.createTransport();
 
     try {
       const result = await transport.sendMail(this.buildMailOptions(data));
