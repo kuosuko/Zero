@@ -19,8 +19,9 @@ import { defaultUserSettings } from './schemas';
 import { disableBrainFunction } from './brain';
 import { APIError } from 'better-auth/api';
 import { EProviders } from '../types';
+import type { HonoContext } from '../ctx';
+import { getContext } from 'hono/context-storage';
 import { createDriver } from './driver';
-import { Autumn } from 'autumn-js';
 import { createDb } from '../db';
 import { Effect } from 'effect';
 import { env } from '../env';
@@ -212,12 +213,21 @@ export const createAuth = () => {
           if (!request) throw new APIError('BAD_REQUEST', { message: 'Request object is missing' });
           const db = await getZeroDB(user.id);
           const connections = await db.findManyConnections();
-          const autumn = new Autumn({ secretKey: env.AUTUMN_SECRET_KEY });
-          try {
-            await autumn.customers.delete(user.id);
-          } catch (error) {
-            console.error('Failed to delete Autumn customer:', error);
-            // Continue with deletion process despite Autumn failure
+          const context = getContext<HonoContext>();
+          const customer = await context.var.autumn?.customers.get(user.id);
+          if (customer?.data) {
+            try {
+              await Promise.all(
+                customer.data.products.map(async (product) =>
+                  context.var.autumn?.cancel({
+                    customer_id: user.id,
+                    product_id: product.id,
+                  }),
+                ),
+              );
+            } catch (error) {
+              console.error('Failed to delete Autumn customer:', error);
+            }
           }
 
           const revokedAccounts = (
