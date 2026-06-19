@@ -1,4 +1,4 @@
-import { ImapFlow } from 'imapflow';
+import { RawImapClient } from './raw-imap';
 import { simpleParser } from 'mailparser';
 import { createTransport } from 'nodemailer';
 import { env } from '../../env';
@@ -277,7 +277,7 @@ const flattenMailboxTree = (node: { folders?: MailboxTreeNode[] } | undefined): 
 };
 
 export const validateManualImapSmtpConnection = async (config: ManualImapSmtpManagerConfig) => {
-  const imapClient = new ImapFlow({
+  const imapClient = new RawImapClient({
     host: config.config.imap.host,
     port: config.config.imap.port,
     secure: config.config.imap.secure,
@@ -344,7 +344,7 @@ export class ImapSmtpMailManager implements MailManager {
   }
 
   private async createImapClient() {
-    return new ImapFlow({
+    return new RawImapClient({
       host: this.config.config.imap.host,
       port: this.config.config.imap.port,
       secure: this.config.config.imap.secure,
@@ -407,7 +407,7 @@ export class ImapSmtpMailManager implements MailManager {
     return client;
   }
 
-  private async openMailbox(client: ImapFlow, folderOrMailbox: string) {
+  private async openMailbox(client: RawImapClient, folderOrMailbox: string) {
     const candidates = mailboxCandidatesForFolder(folderOrMailbox);
     let lastError: unknown;
 
@@ -425,7 +425,7 @@ export class ImapSmtpMailManager implements MailManager {
       : new Error(`Unable to open IMAP mailbox for ${folderOrMailbox}`);
   }
 
-  private async fetchMessagesByUids(client: ImapFlow, uids: number[]) {
+  private async fetchMessagesByUids(client: RawImapClient, uids: number[]) {
     if (uids.length === 0) return [] as ImapFetchedMessage[];
 
     const query = uids.join(',');
@@ -564,7 +564,7 @@ export class ImapSmtpMailManager implements MailManager {
     return haystack.includes(normalized);
   }
 
-  private async collectThreadMessages(client: ImapFlow, mailbox: string, threadKey: string) {
+  private async collectThreadMessages(client: RawImapClient, mailbox: string, threadKey: string) {
     const allUids = ((await client.search({ all: true }, { uid: true })) as number[])
       .map((uid) => Number(uid))
       .sort((a, b) => a - b);
@@ -580,7 +580,7 @@ export class ImapSmtpMailManager implements MailManager {
     });
   }
 
-  private async resolveMailboxUids(client: ImapFlow, ids: string[]) {
+  private async resolveMailboxUids(client: RawImapClient, ids: string[]) {
     const grouped = new Map<string, Set<number>>();
 
     for (const id of ids) {
