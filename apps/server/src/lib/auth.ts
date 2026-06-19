@@ -7,7 +7,8 @@ import {
   SuperSearchEmail,
   WelcomeEmail,
 } from './react-emails/email-sequences';
-import { createAuthMiddleware, phoneNumber, jwt, bearer, mcp } from 'better-auth/plugins';
+import { phoneNumber, jwt, bearer, mcp } from 'better-auth/plugins';
+import { createAuthMiddleware } from 'better-auth/api';
 import { type Account, betterAuth, type BetterAuthOptions } from 'better-auth';
 import { getBrowserTimezone, isValidTimezone } from './timezones';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';

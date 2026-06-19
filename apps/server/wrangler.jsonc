@@ -4,666 +4,127 @@
   "compatibility_date": "2025-05-01",
   "compatibility_flags": ["nodejs_compat"],
   "main": "src/main.ts",
-  "env": {
-    "local": {
-      "rules": [
-        {
-          "type": "Text",
-          "globs": ["**/*.sql"],
-          "fallthrough": true,
-        },
-      ],
-      "ai": {
-        "binding": "AI",
-      },
-      "vectorize": [
-        {
-          "binding": "VECTORIZE",
-          "index_name": "threads-vector-staging",
-        },
-        {
-          "binding": "VECTORIZE_MESSAGE",
-          "index_name": "messages-vector-staging",
-        },
-      ],
-      "r2_buckets": [
-        {
-          "binding": "THREADS_BUCKET",
-          "bucket_name": "threads-staging",
-        },
-      ],
-      "durable_objects": {
-        "bindings": [
-          {
-            "name": "ZERO_AGENT",
-            "class_name": "ZeroAgent",
-          },
-          {
-            "name": "ZERO_MCP",
-            "class_name": "ZeroMCP",
-          },
-          {
-            "name": "ZERO_DB",
-            "class_name": "ZeroDB",
-          },
-          {
-            "name": "ZERO_DRIVER",
-            "class_name": "ZeroDriver",
-          },
-          {
-            "name": "THINKING_MCP",
-            "class_name": "ThinkingMCP",
-          },
-          {
-            "name": "WORKFLOW_RUNNER",
-            "class_name": "WorkflowRunner",
-          },
-
-          {
-            "name": "THREAD_SYNC_WORKER",
-            "class_name": "ThreadSyncWorker",
-          },
-          {
-            "name": "SHARD_REGISTRY",
-            "class_name": "ShardRegistry",
-          },
-        ],
-      },
-      "workflows": [
-        {
-          "binding": "SYNC_THREADS_WORKFLOW",
-          "class_name": "SyncThreadsWorkflow",
-          "name": "sync-threads-workflow",
-        },
-        {
-          "binding": "SYNC_THREADS_COORDINATOR_WORKFLOW",
-          "class_name": "SyncThreadsCoordinatorWorkflow",
-          "name": "sync-threads-coordinator-workflow",
-        },
-      ],
-      "queues": {
-        "producers": [
-          {
-            "queue": "thread-queue",
-            "binding": "thread_queue",
-          },
-          {
-            "queue": "subscribe-queue",
-            "binding": "subscribe_queue",
-          },
-          {
-            "queue": "send-email-queue",
-            "binding": "send_email_queue",
-          },
-        ],
-        "consumers": [
-          {
-            "queue": "subscribe-queue",
-          },
-          {
-            "queue": "thread-queue",
-          },
-          {
-            "queue": "send-email-queue",
-          },
-        ],
-      },
-      "migrations": [
-        {
-          "tag": "v1",
-          "new_classes": ["DurableMailbox"],
-        },
-        {
-          "tag": "v2",
-          "new_sqlite_classes": ["ZeroAgent", "ZeroMCP"],
-        },
-        {
-          "tag": "v3",
-          "new_classes": ["ZeroDB"],
-        },
-        {
-          "tag": "v4",
-          "deleted_classes": ["DurableMailbox"],
-        },
-        {
-          "tag": "v5",
-          "new_sqlite_classes": ["ZeroDriver"],
-        },
-        {
-          "tag": "v6",
-          "new_sqlite_classes": ["ThinkingMCP"],
-        },
-        {
-          "tag": "v7",
-          "new_sqlite_classes": ["WorkflowRunner"],
-        },
-        {
-          "tag": "v8",
-          "new_sqlite_classes": ["ThreadSyncWorker"],
-        },
-        {
-          "tag": "v9",
-          "new_sqlite_classes": ["ShardRegistry"],
-        },
-
-      ],
-
-      "observability": {
-        "enabled": true,
-      },
-      "d1_databases": [
-        {
-          "binding": "DB",
-          "database_name": "zero-local",
-          "database_id": "00000000-0000-0000-0000-000000000001"
-        }
-      ],
-      "vars": {
-        "NODE_ENV": "local",
-        "COOKIE_DOMAIN": "localhost",
-        "VITE_PUBLIC_BACKEND_URL": "http://localhost:8787",
-        "VITE_PUBLIC_APP_URL": "http://localhost:3000",
-        "JWT_SECRET": "secret",
-        "ELEVENLABS_API_KEY": "1234567890",
-        "DISABLE_CALLS": "true",
-        "VOICE_SECRET": "1234567890",
-        "GOOGLE_S_ACCOUNT": "{}",
-        "DROP_AGENT_TABLES": "false",
-        "THREAD_SYNC_MAX_COUNT": "60",
-        "THREAD_SYNC_LOOP": "false",
-        "DISABLE_WORKFLOWS": "true",
-        "AUTORAG_ID": "",
-        "USE_OPENAI": "true",
-        "CLOUDFLARE_ACCOUNT_ID": "",
-        "CLOUDFLARE_API_TOKEN": "",
-        "MEET_AUTH_HEADER": "",
-        "OTEL_EXPORTER_OTLP_ENDPOINT": "https://api.axiom.co/v1/traces",
-        "OTEL_SERVICE_NAME": "zero-email-server-local",
-        "DD_API_KEY": "",
-        "DD_APP_KEY": "",
-        "DD_SITE": "datadoghq.com",
-      },
-      "kv_namespaces": [
-        {
-          "binding": "gmail_history_id",
-          "id": "4e814c70e35d413d99c923029928efae",
-        },
-        {
-          "binding": "gmail_processing_threads",
-          "id": "b7db3a98a80f4e16a8b6edc5fa8c7b76",
-        },
-        {
-          "binding": "subscribed_accounts",
-          "id": "7e6eadacf19c4c56a9ec3c357adb584a",
-        },
-        {
-          "binding": "connection_labels",
-          "id": "4d3a28d3265a4388aae2e9e9b534d019",
-        },
-        {
-          "binding": "prompts_storage",
-          "id": "620e710aaea744e59df4788f9ec18ff9",
-        },
-        {
-          "binding": "gmail_sub_age",
-          "id": "c55e692bb71d4e5bae23dded092b09d5",
-        },
-        {
-          "binding": "pending_emails_status",
-          "id": "7f277903ebab4b4d89f5d59b1f531073",
-        },
-        {
-          "binding": "pending_emails_payload",
-          "id": "d5da698931524da9992fe398e095fc32",
-        },
-        {
-          "binding": "scheduled_emails",
-          "id": "444cad0e54114635b5199ffae9542bd5",
-        },
-        {
-          "binding": "snoozed_emails",
-          "id": "f3a30ed7198542d890db172536bade33",
-        },
-      ],
+  // ── 個人自架精簡版 (SUKO / Personal account) ───────────────────────────────
+  // 原始 3-env (local/staging/production) 臃腫設定已壓成這份單一 config。
+  // 砍掉個人 IMAP 用不到的: 9 個 KV、3 個 Queue、2 個 Vectorize、cron triggers。
+  // 保留: D1 + R2 + 1 KV + 8 DO + 2 sync Workflow + Workers AI binding。
+  // 完整分析見 docs/plans/2026-06-19-zero-lean-infra-plan.md
+  "rules": [
+    {
+      "type": "Text",
+      "globs": ["**/*.sql"],
+      "fallthrough": true,
     },
-    "staging": {
-      "rules": [
-        {
-          "type": "Text",
-          "globs": ["**/*.sql"],
-          "fallthrough": true,
-        },
-      ],
-      "triggers": {
-        "crons": ["0 0 * * *", "0 * * * *"],
-      },
-      "ai": {
-        "binding": "AI",
-      },
-      "vectorize": [
-        {
-          "binding": "VECTORIZE",
-          "index_name": "threads-vector-staging",
-        },
-        {
-          "binding": "VECTORIZE_MESSAGE",
-          "index_name": "messages-vector-staging",
-        },
-      ],
-      "limits": {
-        "cpu_ms": 300000,
-      },
-      "durable_objects": {
-        "bindings": [
-          {
-            "name": "ZERO_AGENT",
-            "class_name": "ZeroAgent",
-          },
-          {
-            "name": "ZERO_MCP",
-            "class_name": "ZeroMCP",
-          },
-          {
-            "name": "ZERO_DB",
-            "class_name": "ZeroDB",
-          },
-          {
-            "name": "ZERO_DRIVER",
-            "class_name": "ZeroDriver",
-          },
-          {
-            "name": "THINKING_MCP",
-            "class_name": "ThinkingMCP",
-          },
-          {
-            "name": "WORKFLOW_RUNNER",
-            "class_name": "WorkflowRunner",
-          },
-          {
-            "name": "THREAD_SYNC_WORKER",
-            "class_name": "ThreadSyncWorker",
-          },
-          {
-            "name": "SHARD_REGISTRY",
-            "class_name": "ShardRegistry",
-          },
-
-        ],
-      },
-      "workflows": [
-        {
-          "binding": "SYNC_THREADS_WORKFLOW",
-          "class_name": "SyncThreadsWorkflow",
-          "name": "sync-threads-workflow-staging",
-        },
-        {
-          "binding": "SYNC_THREADS_COORDINATOR_WORKFLOW",
-          "class_name": "SyncThreadsCoordinatorWorkflow",
-          "name": "sync-threads-coordinator-workflow-staging",
-        },
-      ],
-      "r2_buckets": [
-        {
-          "binding": "THREADS_BUCKET",
-          "bucket_name": "threads-staging",
-        },
-      ],
-      "queues": {
-        "producers": [
-          {
-            "queue": "thread-queue-staging",
-            "binding": "thread_queue",
-          },
-          {
-            "queue": "subscribe-queue-staging",
-            "binding": "subscribe_queue",
-          },
-          {
-            "queue": "send-email-queue-staging",
-            "binding": "send_email_queue",
-          },
-        ],
-        "consumers": [
-          {
-            "queue": "subscribe-queue-staging",
-          },
-          {
-            "queue": "thread-queue-staging",
-          },
-          {
-            "queue": "send-email-queue-staging",
-          },
-        ],
-      },
-      "migrations": [
-        {
-          "tag": "v1",
-          "new_classes": ["DurableMailbox"],
-        },
-        {
-          "tag": "v2",
-          "new_sqlite_classes": ["ZeroAgent", "ZeroMCP"],
-        },
-        {
-          "tag": "v3",
-          "new_classes": ["ZeroDB"],
-        },
-        {
-          "tag": "v4",
-          "new_sqlite_classes": ["ZeroAgent"],
-        },
-        {
-          "tag": "v5",
-          "deleted_classes": ["DurableMailbox"],
-        },
-        {
-          "tag": "v6",
-          "new_sqlite_classes": ["ZeroDriver"],
-        },
-        {
-          "tag": "v7",
-          "new_sqlite_classes": ["ThinkingMCP"],
-        },
-        {
-          "tag": "v8",
-          "new_sqlite_classes": ["WorkflowRunner"],
-        },
-        {
-          "tag": "v9",
-          "new_sqlite_classes": ["ThreadSyncWorker"],
-        },
-        {
-          "tag": "v10",
-          "new_sqlite_classes": ["ShardRegistry"],
-        },
-
-      ],
-      "observability": {
-        "enabled": true,
-      },
-      "d1_databases": [
-        {
-          "binding": "DB",
-          "database_name": "zero-staging",
-          "database_id": "00000000-0000-0000-0000-000000000002"
-        }
-      ],
-      "vars": {
-        "NODE_ENV": "development",
-        "COOKIE_DOMAIN": "0.email",
-        "VITE_PUBLIC_BACKEND_URL": "https://sapi.0.email",
-        "VITE_PUBLIC_APP_URL": "https://staging.0.email",
-        "DISABLE_CALLS": "",
-        "DROP_AGENT_TABLES": "false",
-        "THREAD_SYNC_MAX_COUNT": "60",
-        "THREAD_SYNC_LOOP": "true",
-        "DISABLE_WORKFLOWS": "false",
-        "OTEL_EXPORTER_OTLP_ENDPOINT": "https://api.axiom.co/v1/traces",
-        "OTEL_SERVICE_NAME": "zero-email-server-staging",
-        "DD_API_KEY": "",
-        "DD_APP_KEY": "",
-        "DD_SITE": "datadoghq.com",
-      },
-      "kv_namespaces": [
-        {
-          "binding": "gmail_history_id",
-          "id": "4e814c70e35d413d99c923029928efae",
-        },
-        {
-          "binding": "gmail_processing_threads",
-          "id": "b7db3a98a80f4e16a8b6edc5fa8c7b76",
-        },
-        {
-          "binding": "subscribed_accounts",
-          "id": "7e6eadacf19c4c56a9ec3c357adb584a",
-        },
-        {
-          "binding": "connection_labels",
-          "id": "4d3a28d3265a4388aae2e9e9b534d019",
-        },
-        {
-          "binding": "prompts_storage",
-          "id": "620e710aaea744e59df4788f9ec18ff9",
-        },
-        {
-          "binding": "gmail_sub_age",
-          "id": "c55e692bb71d4e5bae23dded092b09d5",
-        },
-        {
-          "binding": "pending_emails_status",
-          "id": "7f277903ebab4b4d89f5d59b1f531073",
-        },
-        {
-          "binding": "pending_emails_payload",
-          "id": "d5da698931524da9992fe398e095fc32",
-        },
-        {
-          "binding": "scheduled_emails",
-          "id": "444cad0e54114635b5199ffae9542bd5",
-        },
-        {
-          "binding": "snoozed_emails",
-          "id": "f3a30ed7198542d890db172536bade33",
-        },
-      ],
+  ],
+  "observability": {
+    "enabled": true,
+  },
+  "ai": {
+    "binding": "AI",
+  },
+  "r2_buckets": [
+    {
+      "binding": "THREADS_BUCKET",
+      "bucket_name": "zero-threads",
     },
-    "production": {
-      "rules": [
-        {
-          "type": "Text",
-          "globs": ["**/*.sql"],
-          "fallthrough": true,
-        },
-      ],
-      "triggers": {
-        "crons": ["0 0 * * *", "0 * * * *"],
-      },
-      "r2_buckets": [
-        {
-          "binding": "THREADS_BUCKET",
-          "bucket_name": "threads",
-        },
-      ],
-      "ai": {
-        "binding": "AI",
-      },
-      "vectorize": [
-        {
-          "binding": "VECTORIZE",
-          "index_name": "threads-vector",
-        },
-        {
-          "binding": "VECTORIZE_MESSAGE",
-          "index_name": "messages-vector",
-        },
-      ],
-      "observability": {
-        "enabled": true,
-      },
-      "d1_databases": [
-        {
-          "binding": "DB",
-          "database_name": "zero-production",
-          "database_id": "00000000-0000-0000-0000-000000000003"
-        }
-      ],
-      "durable_objects": {
-        "bindings": [
-          {
-            "name": "ZERO_AGENT",
-            "class_name": "ZeroAgent",
-          },
-          {
-            "name": "ZERO_MCP",
-            "class_name": "ZeroMCP",
-          },
-          {
-            "name": "ZERO_DB",
-            "class_name": "ZeroDB",
-          },
-          {
-            "name": "ZERO_DRIVER",
-            "class_name": "ZeroDriver",
-          },
-          {
-            "name": "THINKING_MCP",
-            "class_name": "ThinkingMCP",
-          },
-          {
-            "name": "WORKFLOW_RUNNER",
-            "class_name": "WorkflowRunner",
-          },
-          {
-            "name": "THREAD_SYNC_WORKER",
-            "class_name": "ThreadSyncWorker",
-          },
-          {
-            "name": "SHARD_REGISTRY",
-            "class_name": "ShardRegistry",
-          },
-
-        ],
-      },
-      "workflows": [
-        {
-          "binding": "SYNC_THREADS_WORKFLOW",
-          "class_name": "SyncThreadsWorkflow",
-          "name": "sync-threads-workflow-prod",
-        },
-        {
-          "binding": "SYNC_THREADS_COORDINATOR_WORKFLOW",
-          "class_name": "SyncThreadsCoordinatorWorkflow",
-          "name": "sync-threads-coordinator-workflow-prod",
-        },
-      ],
-      "queues": {
-        "producers": [
-          {
-            "queue": "thread-queue-prod",
-            "binding": "thread_queue",
-          },
-          {
-            "queue": "subscribe-queue-prod",
-            "binding": "subscribe_queue",
-          },
-          {
-            "queue": "send-email-queue-prod",
-            "binding": "send_email_queue",
-          },
-        ],
-        "consumers": [
-          {
-            "queue": "subscribe-queue-prod",
-          },
-          {
-            "queue": "thread-queue-prod",
-          },
-          {
-            "queue": "send-email-queue-prod",
-          },
-        ],
-      },
-      "migrations": [
-        {
-          "tag": "v1",
-          "new_classes": ["DurableMailbox"],
-        },
-        {
-          "tag": "v2",
-          "new_sqlite_classes": ["ZeroAgent", "ZeroMCP"],
-        },
-        {
-          "tag": "v3",
-          "new_classes": ["ZeroDB"],
-        },
-        {
-          "tag": "v4",
-          "new_sqlite_classes": ["ZeroAgent"],
-        },
-        {
-          "tag": "v5",
-          "deleted_classes": ["DurableMailbox"],
-        },
-        {
-          "tag": "v6",
-          "new_sqlite_classes": ["ZeroDriver"],
-        },
-        {
-          "tag": "v7",
-          "new_sqlite_classes": ["ThinkingMCP"],
-        },
-        {
-          "tag": "v8",
-          "new_sqlite_classes": ["WorkflowRunner"],
-        },
-        {
-          "tag": "v9",
-          "new_sqlite_classes": ["ThreadSyncWorker"],
-        },
-        {
-          "tag": "v10",
-          "new_sqlite_classes": ["ShardRegistry"],
-        },
-
-      ],
-      "vars": {
-        "NODE_ENV": "production",
-        "COOKIE_DOMAIN": "0.email",
-        "VITE_PUBLIC_BACKEND_URL": "https://api.0.email",
-        "VITE_PUBLIC_APP_URL": "https://0.email",
-        "DISABLE_CALLS": "true",
-        "DROP_AGENT_TABLES": "false",
-        "THREAD_SYNC_MAX_COUNT": "60",
-        "THREAD_SYNC_LOOP": "true",
-        "DISABLE_WORKFLOWS": "true",
-        "OTEL_EXPORTER_OTLP_ENDPOINT": "https://api.axiom.co/v1/traces",
-        "OTEL_SERVICE_NAME": "zero-email-server-production",
-        "DD_API_KEY": "",
-        "DD_APP_KEY": "",
-        "DD_SITE": "datadoghq.com",
-      },
-      "kv_namespaces": [
-        {
-          "binding": "gmail_history_id",
-          "id": "10005d74e84f4f18a17c9618d9e9cecf",
-        },
-        {
-          "binding": "gmail_processing_threads",
-          "id": "3348ff0976284269a8d8a5e6e4c04c56",
-        },
-        {
-          "binding": "subscribed_accounts",
-          "id": "5902b3b948ff4c4ba1aedbbbbe25503d",
-        },
-        {
-          "binding": "connection_labels",
-          "id": "9a13290a55ad4f62824c67005dd66f6f",
-        },
-        {
-          "binding": "prompts_storage",
-          "id": "2a4ebda553f3456085cfcf92cc0f570f",
-        },
-        {
-          "binding": "gmail_sub_age",
-          "id": "0591e91fffcc4675aaf00f909bee77d2",
-        },
-        {
-          "binding": "pending_emails_status",
-          "id": "e65f8f72441d4eadb9d5ae36269316c9",
-        },
-        {
-          "binding": "pending_emails_payload",
-          "id": "e65f8f72441d4eadb9d5ae36269316c9_payload",
-        },
-        {
-          "binding": "scheduled_emails",
-          "id": "e65f8f72441d4eadb9d5ae36269316c9_scheduled",
-        },
-        {
-          "binding": "snoozed_emails",
-          "id": "f0952e9c3b024cb499c4b9dfe8bb603e",
-        },
-      ],
+  ],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "zero-personal",
+      "database_id": "efecb00b-be55-444e-b338-b05336eba10e",
     },
+  ],
+  "kv_namespaces": [
+    {
+      // 名字沿用 binding=gmail_processing_threads (code 仍這樣讀),
+      // 底層 namespace 是乾淨命名的 zero-thread-cooldown。
+      // 實際用途: listThreads 的 resync cooldown (非 Gmail 專用)。
+      "binding": "gmail_processing_threads",
+      "id": "342fbee24e4e4083bb0270d5a5d77a7f",
+    },
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "ZERO_AGENT",
+        "class_name": "ZeroAgent",
+      },
+      {
+        "name": "ZERO_MCP",
+        "class_name": "ZeroMCP",
+      },
+      {
+        "name": "ZERO_DB",
+        "class_name": "ZeroDB",
+      },
+      {
+        "name": "ZERO_DRIVER",
+        "class_name": "ZeroDriver",
+      },
+      {
+        "name": "THINKING_MCP",
+        "class_name": "ThinkingMCP",
+      },
+      {
+        "name": "WORKFLOW_RUNNER",
+        "class_name": "WorkflowRunner",
+      },
+      {
+        "name": "THREAD_SYNC_WORKER",
+        "class_name": "ThreadSyncWorker",
+      },
+      {
+        "name": "SHARD_REGISTRY",
+        "class_name": "ShardRegistry",
+      },
+    ],
+  },
+  "workflows": [
+    {
+      "binding": "SYNC_THREADS_WORKFLOW",
+      "class_name": "SyncThreadsWorkflow",
+      "name": "sync-threads-workflow",
+    },
+    {
+      "binding": "SYNC_THREADS_COORDINATOR_WORKFLOW",
+      "class_name": "SyncThreadsCoordinatorWorkflow",
+      "name": "sync-threads-coordinator-workflow",
+    },
+  ],
+  // 全新 worker，用單一乾淨 migration 建立最終 DO 類別 (略過 0.email 的 v1-v9 歷史與已廢棄的 DurableMailbox)。
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": [
+        "ZeroAgent",
+        "ZeroMCP",
+        "ZeroDriver",
+        "ThinkingMCP",
+        "WorkflowRunner",
+        "ThreadSyncWorker",
+        "ShardRegistry",
+      ],
+      "new_classes": ["ZeroDB"],
+    },
+  ],
+  "vars": {
+    "NODE_ENV": "production",
+    "COOKIE_DOMAIN": "",
+    "VITE_PUBLIC_BACKEND_URL": "https://zero-server.suko.workers.dev",
+    "VITE_PUBLIC_APP_URL": "https://zero-server.suko.workers.dev",
+    "DISABLE_CALLS": "true",
+    "VOICE_SECRET": "",
+    "GOOGLE_S_ACCOUNT": "{}",
+    "DROP_AGENT_TABLES": "false",
+    "THREAD_SYNC_MAX_COUNT": "60",
+    "THREAD_SYNC_LOOP": "false",
+    "DISABLE_WORKFLOWS": "true",
+    "AUTORAG_ID": "",
+    "USE_OPENAI": "true",
+    "CLOUDFLARE_ACCOUNT_ID": "",
+    "CLOUDFLARE_API_TOKEN": "",
+    "MEET_AUTH_HEADER": "",
+    "OTEL_SERVICE_NAME": "zero-server-personal",
   },
 }
