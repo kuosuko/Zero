@@ -271,7 +271,7 @@ const attachmentHeadersToArray = (headers: HeaderMapLike | undefined): { name: s
   }));
 };
 
-const flattenMailboxTree = (node: MailboxTreeNode | undefined): MailboxTreeNode[] => {
+const flattenMailboxTree = (node: { folders?: MailboxTreeNode[] } | undefined): MailboxTreeNode[] => {
   const folders = Array.isArray(node?.folders) ? node.folders : [];
   return folders.flatMap((folder) => [folder, ...flattenMailboxTree(folder)]);
 };
@@ -414,7 +414,7 @@ export class ImapSmtpMailManager implements MailManager {
     for (const candidate of candidates) {
       try {
         await client.mailboxOpen(candidate);
-        return client.mailbox.path || candidate;
+        return (client.mailbox && client.mailbox.path) || candidate;
       } catch (error) {
         lastError = error;
       }
@@ -467,8 +467,9 @@ export class ImapSmtpMailManager implements MailManager {
     const receivedHeaders = parsed.headerLines
       ?.filter((line: HeaderLineLike) => line.key === 'received')
       .map((line: HeaderLineLike) => {
-        const separatorIndex = typeof line.line === 'string' ? line.line.indexOf(':') : -1;
-        return separatorIndex === -1 ? '' : line.line.slice(separatorIndex + 1).trim();
+        const raw = typeof line.line === 'string' ? line.line : '';
+        const separatorIndex = raw.indexOf(':');
+        return separatorIndex === -1 ? '' : raw.slice(separatorIndex + 1).trim();
       }) ?? [];
 
     const flags = Array.isArray(message.flags)
@@ -730,7 +731,7 @@ export class ImapSmtpMailManager implements MailManager {
     try {
       const mailbox = await this.openMailbox(client, 'draft');
       const appended = await client.append(mailbox, raw, ['\\Seen', '\\Draft'], new Date());
-      const uid = typeof appended?.uid === 'number' ? appended.uid : null;
+      const uid = appended && typeof appended.uid === 'number' ? appended.uid : null;
 
       return {
         id: uid ? makeMessageId(mailbox, uid) : null,
@@ -934,7 +935,7 @@ export class ImapSmtpMailManager implements MailManager {
       for (const folder of folders) {
         try {
           await this.openMailbox(client, folder);
-          counts.push({ label: folder, count: Number(client.mailbox.exists || 0) });
+          counts.push({ label: folder, count: Number((client.mailbox && client.mailbox.exists) || 0) });
         } catch {
           continue;
         }
@@ -1053,7 +1054,7 @@ export class ImapSmtpMailManager implements MailManager {
 
     try {
       const tree = await client.listTree();
-      return flattenMailboxTree(tree).map((folder) => ({
+      return flattenMailboxTree(tree as unknown as { folders?: MailboxTreeNode[] }).map((folder) => ({
         id: folder.path,
         name: folder.name || folder.path,
         type: folder.specialUse ? 'system' : 'user',
