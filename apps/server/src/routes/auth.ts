@@ -49,7 +49,9 @@ publicRouter.get('/providers', async (c) => {
     };
   });
 
-  if (!isProd) {
+  // dev 登入在「非 production」或「production 但設了 DEV_LOGIN_SECRET」時可用。
+  const devLoginUsable = !isProd || !!env.DEV_LOGIN_SECRET;
+  if (devLoginUsable) {
     customProviderStatus.unshift({
       id: 'local_dev',
       name: 'Local Dev Access',
@@ -69,8 +71,13 @@ publicRouter.get('/providers', async (c) => {
 });
 
 publicRouter.get('/dev/local-login', async (c) => {
+  // 個人自架: production 下需 ?secret= 與 DEV_LOGIN_SECRET 相符才放行；
+  // 非 production 維持開放 (本機開發)。未設 DEV_LOGIN_SECRET 時 production 完全關閉。
   if (c.env.NODE_ENV === 'production') {
-    return c.json({ error: 'Not found' }, 404);
+    const secret = c.env.DEV_LOGIN_SECRET;
+    if (!secret || c.req.query('secret') !== secret) {
+      return c.json({ error: 'Not found' }, 404);
+    }
   }
 
   const { db } = createDb(c.env.DB);
@@ -113,7 +120,7 @@ publicRouter.get('/dev/local-login', async (c) => {
     httpOnly: true,
     path: '/',
     sameSite: 'Lax',
-    secure: false,
+    secure: c.env.NODE_ENV === 'production',
     maxAge: 60 * 60 * 24 * 30,
   });
 
@@ -122,7 +129,9 @@ publicRouter.get('/dev/local-login', async (c) => {
 });
 
 publicRouter.get('/dev/session', async (c) => {
-  if (c.env.NODE_ENV === 'production') {
+  // dev session 只在 dev 登入可用時提供 (非 prod，或 prod 但設了 DEV_LOGIN_SECRET)；
+  // 實際憑證是 httpOnly cookie，secret 只用於 local-login 發 cookie 那一步。
+  if (c.env.NODE_ENV === 'production' && !c.env.DEV_LOGIN_SECRET) {
     return c.json({ session: null }, 404);
   }
 

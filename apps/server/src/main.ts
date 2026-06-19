@@ -626,7 +626,8 @@ const api = new Hono<HonoContext>()
     const session = await auth.api.getSession({ headers: c.req.raw.headers });
     c.set('sessionUser', session?.user);
 
-    if (!session?.user && c.env.NODE_ENV !== 'production') {
+    // dev cookie 旁路: 非 production，或 production 但設了 DEV_LOGIN_SECRET (cookie 只能透過 secret 取得)。
+    if (!session?.user && (c.env.NODE_ENV !== 'production' || c.env.DEV_LOGIN_SECRET)) {
       const devUserId = getCookie(c, 'zero-dev-user');
       if (devUserId) {
         const db = await getZeroDB(devUserId);

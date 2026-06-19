@@ -86,6 +86,8 @@ export type ZeroEnv = {
   OPENAI_MINI_MODEL: string;
   ANTHROPIC_API_KEY: string;
   GOOGLE_S_ACCOUNT: string;
+  // 設定後可在 production 啟用 secret 把關的 dev 本地登入 (透過 ?secret=)。未設則 production 關閉 dev 登入。
+  DEV_LOGIN_SECRET?: string;
   AXIOM_API_TOKEN: string;
   AXIOM_DATASET: string;
   THREADS_BUCKET: R2Bucket;

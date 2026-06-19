@@ -47,7 +47,8 @@ export const authProviders = (env: Record<string, string>): ProviderConfig[] => 
       clientId: env.GOOGLE_CLIENT_ID,
       clientSecret: env.GOOGLE_CLIENT_SECRET,
     },
-    required: env.NODE_ENV === 'production',
+    // 個人自架走 IMAP/SMTP，Google OAuth 為選用 (未設定 client id 時自動略過，不再強制要求)。
+    required: false,
   },
   //   {
   //     id: 'microsoft',
