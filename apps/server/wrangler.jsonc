@@ -80,18 +80,8 @@
       },
     ],
   },
-  "workflows": [
-    {
-      "binding": "SYNC_THREADS_WORKFLOW",
-      "class_name": "SyncThreadsWorkflow",
-      "name": "sync-threads-workflow",
-    },
-    {
-      "binding": "SYNC_THREADS_COORDINATOR_WORKFLOW",
-      "class_name": "SyncThreadsCoordinatorWorkflow",
-      "name": "sync-threads-coordinator-workflow",
-    },
-  ],
+  // sync workflows 已移除: 改用 ZeroDriver DO 內的 inline sync (syncFolderInline)，
+  // 因 Cloudflare Workflow context 不支援 node:tls socket。
   // 全新 worker，用單一乾淨 migration 建立最終 DO 類別 (略過 0.email 的 v1-v9 歷史與已廢棄的 DurableMailbox)。
   "migrations": [
     {
