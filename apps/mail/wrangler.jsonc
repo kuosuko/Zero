@@ -2,14 +2,19 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "zero-mail",
   "compatibility_date": "2025-06-27",
-  // 個人自架: 前端掛 mail.suko.tw，後端 API 在 mailapi.suko.tw (同 suko.tw 站，cookie 共享)。
+  "compatibility_flags": ["nodejs_compat"],
+  // 同源架構: 前端掛 mail.suko.tw，proxy-worker 把後端 API 路徑轉發到 zero-server (service binding)。
+  // 前後端同源 → 無 CORS / 跨來源 cookie / preflight 風暴 (避免 rate-limit 惡性循環)。
+  "main": "proxy-worker.js",
   "routes": [{ "pattern": "mail.suko.tw", "custom_domain": true }],
   "observability": {
     "enabled": true,
   },
   "assets": {
     "directory": "./build/client/",
+    "binding": "ASSETS",
     "not_found_handling": "single-page-application",
     "html_handling": "force-trailing-slash",
   },
+  "services": [{ "binding": "BACKEND", "service": "zero-server" }],
 }

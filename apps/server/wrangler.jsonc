@@ -102,7 +102,7 @@
   "vars": {
     "NODE_ENV": "production",
     "COOKIE_DOMAIN": "suko.tw",
-    "VITE_PUBLIC_BACKEND_URL": "https://mailapi.suko.tw",
+    "VITE_PUBLIC_BACKEND_URL": "https://mail.suko.tw",
     "VITE_PUBLIC_APP_URL": "https://mail.suko.tw",
     "DISABLE_CALLS": "true",
     "VOICE_SECRET": "",
