@@ -12,31 +12,54 @@ import { SettingsCard } from '@/components/settings/settings-card';
 import { AddConnectionDialog } from '@/components/connection/add';
 
 import { useSession, authClient } from '@/lib/auth-client';
-import { useConnections } from '@/hooks/use-connections';
+import { useConnections, useActiveConnection } from '@/hooks/use-connections';
 import { useTRPC } from '@/providers/query-provider';
+import { useQueryClient } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useMutation } from '@tanstack/react-query';
-import { Trash, Plus, Unplug } from 'lucide-react';
+import { Trash, Plus, Unplug, Check } from 'lucide-react';
 import { useThreads } from '@/hooks/use-threads';
-import { useBilling } from '@/hooks/use-billing';
 import { emailProviders } from '@/lib/constants';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { m } from '@/paraglide/messages';
-import { useQueryState } from 'nuqs';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
 export default function ConnectionsPage() {
   const { data, isLoading, refetch: refetchConnections } = useConnections();
+  const { data: activeConnection, refetch: refetchActiveConnection } = useActiveConnection();
   const { refetch } = useSession();
   const [openTooltip, setOpenTooltip] = useState<string | null>(null);
 
   const trpc = useTRPC();
+  const queryClient = useQueryClient();
   const { mutateAsync: deleteConnection } = useMutation(trpc.connections.delete.mutationOptions());
+  const { mutateAsync: setDefaultConnection, isPending: isSwitching } = useMutation(
+    trpc.connections.setDefault.mutationOptions(),
+  );
   const [{ refetch: refetchThreads }] = useThreads();
-  const { isPro } = useBilling();
-  const [, setPricingDialog] = useQueryState('pricingDialog');
+
+  const switchConnection = async (connectionId: string) => {
+    try {
+      await setDefaultConnection({ connectionId });
+      // 切換預設後讓相關查詢失效並重新載入收件匣。
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: trpc.connections.getDefault.queryKey() }),
+        queryClient.invalidateQueries({ queryKey: trpc.connections.list.queryKey() }),
+      ]);
+      await Promise.all([refetchActiveConnection(), refetchConnections()]);
+      refetch();
+      void refetchThreads();
+      toast.success('Default mailbox switched');
+      // 強制重新載入，確保整個 app 切到新信箱的收件匣。
+      window.location.href = '/mail';
+    } catch (error) {
+      console.error('Error switching connection:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to switch mailbox');
+    }
+  };
+
   const disconnectAccount = async (connectionId: string) => {
     await deleteConnection(
       { connectionId },
@@ -136,7 +159,22 @@ export default function ConnectionsPage() {
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                      {activeConnection?.id === connection.id ? (
+                        <Badge variant="secondary" className="gap-1">
+                          <Check className="size-3" />
+                          Default
+                        </Badge>
+                      ) : (
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          disabled={isSwitching}
+                          onClick={() => switchConnection(connection.id)}
+                        >
+                          Set as default
+                        </Button>
+                      )}
                       {data.disconnectedIds?.includes(connection.id) ? (
                         <>
                           <div>
@@ -203,21 +241,8 @@ export default function ConnectionsPage() {
           ) : null}
 
           <div className="flex items-center justify-start">
-            {isPro ? (
-              <AddConnectionDialog>
-                <Button
-                  variant="outline"
-                  className="group relative w-9 overflow-hidden duration-200 hover:w-full sm:hover:w-[32.5%]"
-                >
-                  <Plus className="absolute left-2 h-4 w-4" />
-                  <span className="whitespace-nowrap pl-7 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-                    {m['pages.settings.connections.addEmail']()}
-                  </span>
-                </Button>
-              </AddConnectionDialog>
-            ) : (
+            <AddConnectionDialog>
               <Button
-                onClick={() => setPricingDialog('true')}
                 variant="outline"
                 className="group relative w-9 overflow-hidden duration-200 hover:w-full sm:hover:w-[32.5%]"
               >
@@ -226,7 +251,7 @@ export default function ConnectionsPage() {
                   {m['pages.settings.connections.addEmail']()}
                 </span>
               </Button>
-            )}
+            </AddConnectionDialog>
           </div>
         </div>
       </SettingsCard>

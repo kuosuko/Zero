@@ -6,7 +6,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '../ui/dialog';
-import { useBilling } from '@/hooks/use-billing';
 import { emailProviders } from '@/lib/constants';
 import { authClient } from '@/lib/auth-client';
 import { useTRPC } from '@/providers/query-provider';
@@ -18,7 +17,7 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { cn } from '@/lib/utils';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
@@ -44,7 +43,6 @@ export const AddConnectionDialog = ({
   className?: string;
   onOpenChange?: (open: boolean) => void;
 }) => {
-  const { connections, attach } = useBilling();
   const trpc = useTRPC();
   const queryClient = useQueryClient();
 
@@ -52,10 +50,6 @@ export const AddConnectionDialog = ({
   const [showManualForm, setShowManualForm] = useState(false);
   const [manualForm, setManualForm] = useState(initialManualForm);
 
-  const canCreateConnection = useMemo(() => {
-    if (!connections?.remaining && !connections?.unlimited) return false;
-    return (connections?.unlimited && !connections?.remaining) || (connections?.remaining ?? 0) > 0;
-  }, [connections]);
   const pathname = useLocation().pathname;
 
   const { mutateAsync: createManual, isPending: isCreatingManual } = useMutation(
@@ -64,21 +58,6 @@ export const AddConnectionDialog = ({
   const { mutateAsync: setDefaultConnection } = useMutation(
     trpc.connections.setDefault.mutationOptions(),
   );
-
-  const handleUpgrade = async () => {
-    if (attach) {
-      toast.promise(
-        attach({
-          productId: 'pro-example',
-          successUrl: `${window.location.origin}/mail/inbox?success=true`,
-        }),
-        {
-          success: 'Redirecting to payment...',
-          error: 'Failed to process upgrade. Please try again later.',
-        },
-      );
-    }
-  };
 
   const resetManualForm = () => {
     setShowManualForm(false);
@@ -155,24 +134,6 @@ export const AddConnectionDialog = ({
             {m['pages.settings.connections.connectEmailDescription']()}
           </DialogDescription>
         </DialogHeader>
-        {!canCreateConnection && (
-          <div className="mt-2 flex justify-between gap-2 rounded-lg border border-red-800 bg-red-800/20 p-2">
-            <span className="text-sm">
-              You can only connect 1 email in the free tier.{' '}
-              <span
-                onClick={handleUpgrade}
-                className="hover:bg-subtleWhite hover:text-subtleBlack cursor-pointer underline"
-              >
-                Start 7 day free trial
-              </span>{' '}
-              to connect more.
-            </span>
-            <Button onClick={handleUpgrade} className="text-sm">
-              $20<span className="text-muted-foreground -ml-2 text-xs">/month</span>
-            </Button>
-          </div>
-        )}
-
         {showManualForm ? (
           <div className="mt-4 space-y-4">
             <div className="flex items-center justify-between">
@@ -298,7 +259,7 @@ export const AddConnectionDialog = ({
               <Button variant="outline" onClick={() => handleDialogOpenChange(false)}>
                 Cancel
               </Button>
-              <Button disabled={!canCreateConnection || isCreatingManual} onClick={handleCreateManual}>
+              <Button disabled={isCreatingManual} onClick={handleCreateManual}>
                 {isCreatingManual ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
                 Validate and connect
               </Button>
@@ -324,7 +285,6 @@ export const AddConnectionDialog = ({
                   whileTap={{ scale: 0.97 }}
                 >
                   <Button
-                    disabled={!canCreateConnection}
                     variant="outline"
                     className="h-24 w-full flex-col items-center justify-center gap-2"
                     onClick={async () => {

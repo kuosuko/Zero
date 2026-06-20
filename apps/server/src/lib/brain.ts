@@ -28,6 +28,7 @@ export const disableBrainFunction = async (connection: { id: string; providerId:
 };
 
 export const getPrompt = async (promptName: string, fallback: string) => {
+  if (!env.prompts_storage) return fallback;
   const existingPrompt = await env.prompts_storage.get(promptName);
   if (!existingPrompt || existingPrompt === 'undefined') {
     await env.prompts_storage.put(promptName, fallback);

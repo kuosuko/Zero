@@ -38,6 +38,7 @@ export abstract class BaseSubscriptionFactory {
   }
 
   protected async initializeConnectionLabels(connectionId: string): Promise<void> {
+    if (!env.connection_labels) return;
     const existingLabels = await env.connection_labels.get(connectionId);
     if (!existingLabels?.trim().length) {
       await env.connection_labels.put(connectionId, JSON.stringify(defaultLabels));

@@ -136,6 +136,10 @@ export const mailRouter = router({
           threadsResponse.threads.map(async (t: ThreadItem) => {
             const keyName = `${t.id}__${activeConnection.id}`;
             try {
+              if (!env.snoozed_emails) {
+                filtered.push(t);
+                return;
+              }
               const wakeAtIso = await env.snoozed_emails.get(keyName);
               if (!wakeAtIso) {
                 filtered.push(t);
@@ -759,13 +763,15 @@ export const mailRouter = router({
       );
 
       const wakeAtIso = wakeAtDate.toISOString();
-      await Promise.all(
-        input.ids.map((threadId) =>
-          env.snoozed_emails.put(`${threadId}__${activeConnection.id}`, wakeAtIso, {
-            metadata: { wakeAt: wakeAtIso },
-          }),
-        ),
-      );
+      if (env.snoozed_emails) {
+        await Promise.all(
+          input.ids.map((threadId) =>
+            env.snoozed_emails.put(`${threadId}__${activeConnection.id}`, wakeAtIso, {
+              metadata: { wakeAt: wakeAtIso },
+            }),
+          ),
+        );
+      }
 
       return { success: true };
     }),
@@ -783,11 +789,13 @@ export const mailRouter = router({
           modifyThreadLabelsInDB(activeConnection.id, threadId, ['INBOX'], ['SNOOZED']),
         ),
       );
-      await Promise.all(
-        input.ids.map((threadId) =>
-          env.snoozed_emails.delete(`${threadId}__${activeConnection.id}`),
-        ),
-      );
+      if (env.snoozed_emails) {
+        await Promise.all(
+          input.ids.map((threadId) =>
+            env.snoozed_emails.delete(`${threadId}__${activeConnection.id}`),
+          ),
+        );
+      }
       return { success: true };
     }),
   getMessageAttachments: activeDriverProcedure

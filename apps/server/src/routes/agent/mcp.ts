@@ -84,7 +84,7 @@ export class ZeroMCP extends McpAgent<typeof env, Record<string, unknown>, { use
             ],
           };
         }
-        const response = await env.VECTORIZE.getByIds([s.id]);
+        const response = env.VECTORIZE ? await env.VECTORIZE.getByIds([s.id]) : [];
         const { result: thread } = await getThread(this.activeConnectionId, s.id);
         if (response.length && response?.[0]?.metadata?.['summary'] && thread?.latest?.subject) {
           const result = response[0].metadata as { summary: string; connection: string };

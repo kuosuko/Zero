@@ -132,7 +132,7 @@ const getThreadSummary = (connectionId: string) =>
       id: z.string().describe('The ID of the email thread to get the summary of'),
     }),
     execute: async ({ id }) => {
-      const response = await env.VECTORIZE.getByIds([id]);
+      const response = env.VECTORIZE ? await env.VECTORIZE.getByIds([id]) : [];
       let thread: IGetThreadResponse | null = null;
       try {
         const { result } = await getThread(connectionId, id);

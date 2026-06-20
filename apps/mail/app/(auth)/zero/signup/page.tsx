@@ -22,15 +22,12 @@ export default function SignupZero() {
   });
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    // Append the @0.email suffix to the username
-    const fullEmail = `${values.email}@0.email`;
-
     // Use the correct sonner toast API
-    toast.success(`Trying to signup with ${fullEmail}`, {
+    toast.success(`Trying to signup with ${values.email}`, {
       description: 'Signup attempt',
     });
 
-    // Here you would typically handle authentication with the full email
+    // Here you would typically handle authentication with the email
   }
 
   return (
@@ -51,7 +48,7 @@ export default function SignupZero() {
                   <FormLabel className="text-muted-foreground">Name</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="Luke"
+                      placeholder="Your name"
                       {...field}
                       className="bg-black text-sm text-white placeholder:text-sm"
                     />
@@ -67,16 +64,11 @@ export default function SignupZero() {
                 <FormItem>
                   <FormLabel className="text-muted-foreground">Email</FormLabel>
                   <FormControl>
-                    <div className="relative w-full rounded-md">
-                      <Input
-                        placeholder="adam"
-                        {...field}
-                        className="w-full bg-black pr-16 text-sm text-white placeholder:text-sm"
-                      />
-                      <span className="bg-popover text-muted-foreground border-input absolute bottom-0 right-0 top-0 flex items-center rounded-r-md border border-l-0 px-3 py-2 text-sm">
-                        @0.email
-                      </span>
-                    </div>
+                    <Input
+                      placeholder="you@example.com"
+                      {...field}
+                      className="w-full bg-black text-sm text-white placeholder:text-sm"
+                    />
                   </FormControl>
                 </FormItem>
               )}

@@ -16,10 +16,12 @@ export const brainRouter = router({
   enableBrain: activeConnectionProcedure.mutation(async ({ ctx }) => {
     const connection = ctx.activeConnection as { id: string; providerId: EProviders };
     await setSubscribedState(connection.id, connection.providerId);
-    await env.subscribe_queue.send({
-      connectionId: connection.id,
-      providerId: connection.providerId,
-    } as ISubscribeBatch);
+    if (env.subscribe_queue) {
+      await env.subscribe_queue.send({
+        connectionId: connection.id,
+        providerId: connection.providerId,
+      } as ISubscribeBatch);
+    }
     return true;
     // return await enableBrainFunction(connection);
   }),
@@ -36,7 +38,7 @@ export const brainRouter = router({
     )
     .query(async ({ input, ctx }) => {
       const { threadId } = input;
-      const response = await env.VECTORIZE.getByIds([threadId]);
+      const response = env.VECTORIZE ? await env.VECTORIZE.getByIds([threadId]) : [];
       if (response.length && response?.[0]?.metadata?.['summary']) {
         const result = response[0].metadata as { summary: string; connection: string };
         if (result.connection !== ctx.activeConnection.id) return null;
@@ -53,6 +55,7 @@ export const brainRouter = router({
     }),
   getState: activeConnectionProcedure.query(async ({ ctx }) => {
     const connection = ctx.activeConnection;
+    if (!env.subscribed_accounts) return { enabled: false };
     const state = await env.subscribed_accounts.get(`${connection.id}__${connection.providerId}`);
     if (!state || state === 'pending') return { enabled: false };
     return { enabled: true };
@@ -68,6 +71,7 @@ export const brainRouter = router({
     )
     .query(async ({ ctx }) => {
       const connection = ctx.activeConnection;
+      if (!env.connection_labels) return [];
       const labels = await env.connection_labels.get(connection.id);
       try {
         return labels ? (JSON.parse(labels) as z.infer<typeof labelsSchema>) : [];
@@ -92,7 +96,9 @@ export const brainRouter = router({
 
       const promptName = `${connection.id}-${input.promptType}`;
 
-      await env.prompts_storage.put(promptName, input.content);
+      if (env.prompts_storage) {
+        await env.prompts_storage.put(promptName, input.content);
+      }
 
       return { success: true };
     }),
@@ -109,7 +115,9 @@ export const brainRouter = router({
       const labels = labelsSchema.parse(input.labels);
       console.log(labels);
 
-      await env.connection_labels.put(connection.id, JSON.stringify(labels));
+      if (env.connection_labels) {
+        await env.connection_labels.put(connection.id, JSON.stringify(labels));
+      }
       return { success: true };
     }),
 });

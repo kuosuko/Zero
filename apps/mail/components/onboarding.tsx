@@ -1,44 +1,28 @@
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type ReactNode } from 'react';
 import confetti from 'canvas-confetti';
 
-const steps = [
+const steps: { title: string; description: ReactNode; video?: string }[] = [
   {
-    title: 'Welcome to Zero Email!',
+    title: 'Welcome to your inbox',
     description: 'Your new intelligent email experience starts here.',
-    video: 'https://assets.0.email/get-started.png',
   },
   {
     title: 'Chat with your inbox',
-    description: 'Zero allows you to chat with your inbox, and take actions on your behalf.',
-    video: 'https://assets.0.email/step2.gif',
+    description: 'Chat with your inbox and take actions on your behalf.',
   },
   {
     title: 'AI Compose & Reply',
-    description: 'Our AI assistant allows you to write emails that sound like you.',
-    video: 'https://assets.0.email/step1.gif',
+    description: 'The AI assistant helps you write emails that sound like you.',
   },
   {
     title: 'Label your emails',
-    description: 'Zero helps you label your emails to focus on what matters.',
-    video: 'https://assets.0.email/step3.gif',
-  },
-  {
-    title: 'Coming Soon',
-    description: (
-      <>
-        <span className="text-muted-foreground mb-4">
-          We're excited to bring these powerful features to all users very soon!
-        </span>
-      </>
-    ),
-    video: 'https://assets.0.email/coming-soon.png',
+    description: 'Label your emails to focus on what matters.',
   },
   {
     title: 'Ready to start?',
     description: 'Click below to begin your intelligent email experience!',
-    video: 'https://assets.0.email/ready.png',
   },
 ];
 

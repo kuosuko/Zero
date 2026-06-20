@@ -247,7 +247,6 @@ export const StyledEmailAssistantSystemPrompt = () =>
       <rule>If the request is out of scope, reply only:
             “Sorry, I can only assist with email body composition tasks.”</rule>
       <rule>Use valid, common emoji characters only.</rule>
-      <rule>If a call or meeting is mentioned, include the calendar link: "https://cal.com/team/0/chat"</rule>
     </strict_guidelines>
   </system_prompt>
   `;

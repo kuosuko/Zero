@@ -1342,7 +1342,7 @@ export class ZeroMCP extends McpAgent<typeof env, {}, { userId: string }> {
             text: `Thread ID: ${s.threadId}`,
           },
         ];
-        const response = await env.VECTORIZE.getByIds([s.threadId]);
+        const response = env.VECTORIZE ? await env.VECTORIZE.getByIds([s.threadId]) : [];
         if (response.length && response?.[0]?.metadata?.['summary']) {
           const content = response[0].metadata['summary'] as string;
           const shortResponse = await env.AI.run('@cf/facebook/bart-large-cnn', {

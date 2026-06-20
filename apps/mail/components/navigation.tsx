@@ -154,11 +154,6 @@ export function Navigation() {
                     </ul>
                   </NavigationMenuContent>
                 </NavigationMenuItem>
-                <NavigationMenuItem className="bg-transparent text-white">
-                  <Button asChild variant="ghost" className="h-9 bg-transparent cursor-pointer">
-                    <a href="/pricing">Pricing</a>
-                  </Button>
-                </NavigationMenuItem>
                 <NavigationMenuItem className="bg-transparent text-white cursor-pointer">
                   <a href="/privacy">
                     <Button variant="ghost" className="ml-1 h-9 bg-transparent">
@@ -233,7 +228,7 @@ export function Navigation() {
                   />
                   <img
                     src="/black-icon.svg"
-                    alt="0.email Logo"
+                    alt="Email Logo"
                     className="object-contain dark:hidden"
                     width={22}
                     height={22}
@@ -246,23 +241,12 @@ export function Navigation() {
                 <Link to="/" onClick={() => setOpen(false)}>
                   Home
                 </Link>
-                <Link to="/pricing" onClick={() => setOpen(false)}>
-                  Pricing
-                </Link>
                 {aboutLinks.map((link) => (
                   <a key={link.title} href={link.href} className="block font-medium">
                     {link.title}
                   </a>
                 ))}
               </div>
-              <a
-                target="_blank"
-                rel="noreferrer noopener"
-                href="https://cal.com/team/0/chat"
-                className="font-medium"
-              >
-                Contact Us
-              </a>
             </div>
             <Separator className="mt-8" />
             <div className="mt-8 flex flex-row items-center justify-center gap-4">

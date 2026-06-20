@@ -919,12 +919,16 @@ const app = new Hono<HonoContext>()
         span.setAttributes({ 'auth.status': 'valid' });
 
         try {
-          await env.thread_queue.send({
-            providerId,
-            historyId: body.historyId,
-            subscriptionName: subHeader,
-          });
-          span.setAttributes({ 'queue.message_sent': true });
+          if (env.thread_queue) {
+            await env.thread_queue.send({
+              providerId,
+              historyId: body.historyId,
+              subscriptionName: subHeader,
+            });
+            span.setAttributes({ 'queue.message_sent': true });
+          } else {
+            span.setAttributes({ 'queue.message_sent': false });
+          }
         } catch (error) {
           console.error('Error sending to thread queue', error, {
             providerId,
@@ -1120,9 +1124,14 @@ export default class Entry extends WorkerEntrypoint<ZeroEnv> {
   private async processScheduledEmails() {
     console.log('Checking for scheduled emails ready to be queued...');
     const { scheduled_emails: scheduledKV, send_email_queue } = this.env as {
-      scheduled_emails: KVNamespace;
-      send_email_queue: Queue<IEmailSendBatch>;
+      scheduled_emails?: KVNamespace;
+      send_email_queue?: Queue<IEmailSendBatch>;
     };
+
+    if (!scheduledKV || !send_email_queue) {
+      console.log('[SCHEDULED] scheduled_emails KV or send_email_queue not configured, skipping');
+      return;
+    }
 
     try {
       const now = Date.now();
@@ -1190,7 +1199,7 @@ export default class Entry extends WorkerEntrypoint<ZeroEnv> {
     const unsnoozeMap: Record<string, { threadIds: string[]; keyNames: string[] }> = {};
 
     let cursor: string | undefined = undefined;
-    do {
+    while (this.env.snoozed_emails) {
       const listResp: {
         keys: { name: string; metadata?: { wakeAt?: string } }[];
         cursor?: string;
@@ -1216,7 +1225,8 @@ export default class Entry extends WorkerEntrypoint<ZeroEnv> {
           console.error('Failed to prepare unsnooze for key', key.name, error);
         }
       }
-    } while (cursor);
+      if (!cursor) break;
+    }
 
     // await Promise.all(
     //   Object.entries(unsnoozeMap).map(async ([connectionId, { threadIds, keyNames }]) => {
@@ -1231,7 +1241,9 @@ export default class Entry extends WorkerEntrypoint<ZeroEnv> {
 
     await Promise.all(
       allAccounts.map(async ({ id, providerId }) => {
-        const lastSubscribed = await this.env.gmail_sub_age.get(`${id}__${providerId}`);
+        const lastSubscribed = this.env.gmail_sub_age
+          ? await this.env.gmail_sub_age.get(`${id}__${providerId}`)
+          : null;
 
         if (lastSubscribed) {
           const subscriptionDate = new Date(lastSubscribed);
@@ -1246,7 +1258,7 @@ export default class Entry extends WorkerEntrypoint<ZeroEnv> {
     );
 
     // Send expired subscriptions to queue for renewal
-    if (expiredSubscriptions.length > 0) {
+    if (expiredSubscriptions.length > 0 && this.env.subscribe_queue) {
       console.log(
         `[SCHEDULED] Sending ${expiredSubscriptions.length} expired subscriptions to renewal queue`,
       );

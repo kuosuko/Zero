@@ -33,6 +33,7 @@ export async function setSubscribedState(
   connectionId: string,
   providerId: EProviders,
 ): Promise<void> {
+  if (!env.subscribed_accounts) return;
   return await env.subscribed_accounts.put(
     `${connectionId}__${providerId}`,
     new Date().toISOString(),
@@ -40,6 +41,7 @@ export async function setSubscribedState(
 }
 
 export async function cleanupOnFailure(connectionId: string): Promise<void> {
+  if (!env.subscribed_accounts) return;
   return await env.subscribed_accounts.delete(connectionId);
 }
 
