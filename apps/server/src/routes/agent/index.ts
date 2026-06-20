@@ -729,12 +729,56 @@ export class ZeroDriver extends DurableObject<ZeroEnv> {
       console.log(
         `[syncFolders] Starting folder sync for ${this.name} (threadCount: ${threadCount})`,
       );
-      await this.triggerSyncWorkflow('inbox');
+      // inline sync (不走 Cloudflare Workflow — Workflow context 不支援 node:tls socket，
+      // 會在 driver.list() 卡住；DO context 支援出站連線，故 inline 執行)。
+      await this.syncFolderInline('inbox', maxCount);
     } else {
       console.log(
         `[syncFolders] Skipping sync for ${this.name} - threadCount (${threadCount}) >= maxCount (${maxCount})`,
       );
     }
+  }
+
+  // 在 ZeroDriver DO context inline 同步一個資料夾 (取代 triggerSyncWorkflow)。
+  // 邏輯與 sync-threads-workflow 的 process-single-page 相同，但跑在支援 socket 的 DO 內。
+  private async syncFolderInline(folder: string, limit: number) {
+    await this.setupAuth();
+    if (!this.driver || !this.connection) {
+      console.warn('[syncFolderInline] No driver/connection available');
+      return;
+    }
+    const foundConnection = this.connection;
+    const listResult = await this.driver.list({ folder, maxResults: limit });
+
+    const syncSingleThread = async (thread: { id: string; historyId: string | null }) => {
+      try {
+        const latest = await this.env.THREAD_SYNC_WORKER.get(
+          this.env.THREAD_SYNC_WORKER.newUniqueId(),
+        ).syncThread(foundConnection, thread.id);
+        if (!latest) return;
+        await this.storeThreadInDB(
+          {
+            id: thread.id,
+            threadId: thread.id,
+            providerId: foundConnection.providerId,
+            latestSender: latest.sender,
+            latestReceivedOn: new Date(latest.receivedOn).toISOString(),
+            latestSubject: latest.subject,
+          },
+          latest.tags.map((tag) => tag.id),
+        );
+      } catch (error) {
+        console.error(`[syncFolderInline] Failed to sync thread ${thread.id}:`, error);
+      }
+    };
+
+    // 限制並發，避免對 IMAP server 同時開太多連線
+    const CONCURRENCY = 5;
+    for (let i = 0; i < listResult.threads.length; i += CONCURRENCY) {
+      await Promise.allSettled(listResult.threads.slice(i, i + CONCURRENCY).map(syncSingleThread));
+    }
+    await this.reloadFolder(folder);
+    console.log(`[syncFolderInline] Done ${folder}: ${listResult.threads.length} threads`);
   }
 
   async rawListThreads(params: {
