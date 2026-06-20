@@ -380,10 +380,8 @@ const createAuthConfig = () => {
     },
     baseURL: env.VITE_PUBLIC_BACKEND_URL,
     trustedOrigins: [
-      'https://app.0.email',
-      'https://sapi.0.email',
-      'https://staging.0.email',
-      'https://0.email',
+      'https://mail.suko.tw',
+      'https://mailapi.suko.tw',
       'http://localhost:3000',
     ],
     session: {

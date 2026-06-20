@@ -4,6 +4,7 @@
   "compatibility_date": "2025-05-01",
   "compatibility_flags": ["nodejs_compat"],
   "main": "src/main.ts",
+  "routes": [{ "pattern": "mailapi.suko.tw", "custom_domain": true }],
   // ── 個人自架精簡版 (SUKO / Personal account) ───────────────────────────────
   // 原始 3-env (local/staging/production) 臃腫設定已壓成這份單一 config。
   // 砍掉個人 IMAP 用不到的: 9 個 KV、3 個 Queue、2 個 Vectorize、cron triggers。
@@ -100,9 +101,9 @@
   ],
   "vars": {
     "NODE_ENV": "production",
-    "COOKIE_DOMAIN": "",
-    "VITE_PUBLIC_BACKEND_URL": "https://zero-server.suko.workers.dev",
-    "VITE_PUBLIC_APP_URL": "https://zero-server.suko.workers.dev",
+    "COOKIE_DOMAIN": "suko.tw",
+    "VITE_PUBLIC_BACKEND_URL": "https://mailapi.suko.tw",
+    "VITE_PUBLIC_APP_URL": "https://mail.suko.tw",
     "DISABLE_CALLS": "true",
     "VOICE_SECRET": "",
     "GOOGLE_S_ACCOUNT": "{}",

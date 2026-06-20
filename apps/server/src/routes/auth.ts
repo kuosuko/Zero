@@ -121,6 +121,7 @@ publicRouter.get('/dev/local-login', async (c) => {
     path: '/',
     sameSite: 'Lax',
     secure: c.env.NODE_ENV === 'production',
+    domain: c.env.COOKIE_DOMAIN || undefined, // 跨 *.suko.tw 子網域共享
     maxAge: 60 * 60 * 24 * 30,
   });
 
