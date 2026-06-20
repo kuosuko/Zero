@@ -4,6 +4,7 @@ import type { EnvVarInfo } from '@zero/server/auth-providers';
 import { Google, Mail, Microsoft } from '@/components/icons/icons';
 import ErrorMessage from '@/app/(auth)/login/error-message';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { TriangleAlert } from 'lucide-react';
 import { signIn } from '@/lib/auth-client';
 import { useNavigate } from 'react-router';
@@ -74,6 +75,27 @@ function LoginClientContent({ providers, isProd }: LoginClientProps) {
   const navigate = useNavigate();
   const [expandedProviders, setExpandedProviders] = useState<Record<string, boolean>>({});
   const [error, _] = useQueryState('error');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleEmailLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (submitting) return;
+    setSubmitting(true);
+    try {
+      const res = await signIn.email({ email, password, callbackURL: '/mail/inbox' });
+      if (res?.error) {
+        toast.error(res.error.message || 'Login failed');
+      } else {
+        navigate('/mail/inbox');
+      }
+    } catch {
+      toast.error('Login failed');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   useEffect(() => {
     const missing = providers.find((p) => p.required && !p.enabled);
@@ -140,6 +162,36 @@ function LoginClientContent({ providers, isProd }: LoginClientProps) {
       <div className="animate-in slide-in-from-bottom-4 mx-auto flex max-w-[600px] grow items-center justify-center space-y-8 px-4 duration-500 sm:px-12 md:px-0">
         <div className="w-full space-y-4">
           <p className="text-center text-4xl font-bold text-white md:text-5xl">Login to Zero</p>
+
+          <form onSubmit={handleEmailLogin} className="space-y-3">
+            <Input
+              type="email"
+              autoComplete="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="h-11 bg-white/5 text-white placeholder:text-white/40"
+            />
+            <Input
+              type="password"
+              autoComplete="current-password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="h-11 bg-white/5 text-white placeholder:text-white/40"
+            />
+            <Button type="submit" disabled={submitting} className="h-11 w-full">
+              {submitting ? 'Signing in…' : 'Sign in'}
+            </Button>
+          </form>
+
+          <div className="flex items-center gap-3 py-1">
+            <div className="h-px flex-1 bg-white/10" />
+            <span className="text-xs text-white/40">or</span>
+            <div className="h-px flex-1 bg-white/10" />
+          </div>
 
           {error && (
             <Alert variant="default" className="border-orange-500/40 bg-orange-500/10">
