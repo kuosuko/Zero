@@ -25,6 +25,10 @@ type AutumnContext = {
 
 export const autumnApi = new Hono<AutumnContext>()
   .use('*', async (c, next) => {
+    // Autumn 帳務未設定 (個人自架) → 直接回 stub，避免空 secretKey 造成 500。
+    if (!env.AUTUMN_SECRET_KEY) {
+      return c.json({ disabled: true, customer: null, products: [] });
+    }
     const { sessionUser } = c.var;
     c.set(
       'customerData',

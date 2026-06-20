@@ -559,14 +559,8 @@ export const getActiveConnection = async () => {
 
   const firstConnection = await db.findFirstConnection();
   if (!firstConnection) {
-    try {
-      if (auth) {
-        await auth.api.revokeSession({ headers: c.req.raw.headers });
-        await auth.api.signOut({ headers: c.req.raw.headers });
-      }
-    } catch (err) {
-      console.warn(`[getActiveConnection] Session cleanup failed for user ${sessionUser.id}:`, err);
-    }
+    // 不再自動 signOut: 找不到連線不該把使用者登出 (會造成登入後立刻彈回 login)。
+    // 前端應顯示「尚未連接信箱」的空狀態，使用者保持登入。
     console.error(`No connections found for user ${sessionUser.id}`);
     throw new Error('No connections found for user');
   }

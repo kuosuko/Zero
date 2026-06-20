@@ -13,6 +13,8 @@ export const userRouter = router({
     return { success, message };
   }),
   getIntercomToken: privateProcedure.query(async ({ ctx }) => {
+    // Intercom 未設定 (無 JWT_SECRET) → 不簽 token，回 null (避免 "secret must be a string" 500)。
+    if (!ctx.c.env.JWT_SECRET) return null;
     const token = await jwt.sign(
       {
         user_id: ctx.sessionUser.id,

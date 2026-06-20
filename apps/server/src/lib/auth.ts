@@ -381,6 +381,12 @@ const createAuthConfig = () => {
         enabled: true,
         domain: env.COOKIE_DOMAIN,
       },
+      // 前端 mail.suko.tw 與後端 mailapi.suko.tw 跨來源 (cross-origin)；
+      // SameSite=None+Secure 才能讓瀏覽器在跨來源 fetch(credentials) 帶上 session cookie。
+      defaultCookieAttributes: {
+        sameSite: 'none',
+        secure: true,
+      },
     },
     baseURL: env.VITE_PUBLIC_BACKEND_URL,
     trustedOrigins: [

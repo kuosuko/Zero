@@ -5,7 +5,7 @@ import { getConnInfo } from 'hono/cloudflare-workers';
 import { initTRPC, TRPCError } from '@trpc/server';
 import { createLoggingMiddleware } from '../lib/trpc-logging';
 
-import { redis } from '../lib/services';
+import { redis, isRedisConfigured } from '../lib/services';
 import type { Context } from 'hono';
 import superjson from 'superjson';
 
@@ -144,6 +144,8 @@ export const createRateLimiterMiddleware = (config: {
   generatePrefix: (ctx: TrpcContext, input: any) => string;
 }) =>
   t.middleware(async ({ next, ctx, input }) => {
+    // 未設定 Upstash Redis (個人單人自架) → 跳過 rate limiting。
+    if (!isRedisConfigured()) return next();
     const ratelimiter = new Ratelimit({
       redis: redis(),
       limiter: config.limiter,
