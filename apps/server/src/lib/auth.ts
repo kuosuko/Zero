@@ -91,6 +91,8 @@ const scheduleCampaign = (userInfo: { address: string; name: string }) =>
   });
 
 const connectionHandlerHook = async (account: Account) => {
+  // credential (email/password) 帳號沒有 OAuth token，不需建 IMAP/OAuth connection，直接跳過。
+  if (account.providerId === 'credential') return;
   if (!account.accessToken || !account.refreshToken) {
     console.error('Missing Access/Refresh Tokens', { account });
     throw new APIError('EXPECTATION_FAILED', {
@@ -162,13 +164,9 @@ const connectionHandlerHook = async (account: Account) => {
 export const createAuth = () => {
   const twilioClient =
     env.TWILIO_ACCOUNT_SID && env.TWILIO_AUTH_TOKEN && env.TWILIO_PHONE_NUMBER ? twilio() : null;
-  const dub = new Dub();
-
   return betterAuth({
     plugins: [
-      dubAnalytics({
-        dubClient: dub,
-      }),
+      // dubAnalytics 已移除: 個人自架不需 Dub 分析追蹤 (登入時會打到無效 URL /pipeline 造成 500)。
       mcp({
         loginPage: env.VITE_PUBLIC_APP_URL + '/login',
       }),
@@ -283,8 +281,8 @@ export const createAuth = () => {
       },
     },
     emailAndPassword: {
-      enabled: false,
-      requireEmailVerification: true,
+      enabled: true,
+      requireEmailVerification: false,
       sendResetPassword: async ({ user, url }) => {
         await resend().emails.send({
           from: '0.email <onboarding@0.email>',
@@ -351,23 +349,29 @@ export const createAuth = () => {
 };
 
 const createAuthConfig = () => {
-  const cache = redis();
   const { db } = createDb(env.DB);
+  // 只有設定 REDIS_URL 才用 Upstash Redis 當 session secondaryStorage；
+  // 否則 (個人自架) 用 D1 的 session 表，避免空 REDIS_URL 打到無效 URL /pipeline。
+  const cache = env.REDIS_URL ? redis() : null;
   return {
     database: drizzleAdapter(db, { provider: 'sqlite' }),
-    secondaryStorage: {
-      get: async (key: string) => {
-        const value = await cache.get(key);
-        return typeof value === 'string' ? value : value ? JSON.stringify(value) : null;
-      },
-      set: async (key: string, value: string, ttl?: number) => {
-        if (ttl) await cache.set(key, value, { ex: ttl });
-        else await cache.set(key, value);
-      },
-      delete: async (key: string) => {
-        await cache.del(key);
-      },
-    },
+    ...(cache
+      ? {
+          secondaryStorage: {
+            get: async (key: string) => {
+              const value = await cache.get(key);
+              return typeof value === 'string' ? value : value ? JSON.stringify(value) : null;
+            },
+            set: async (key: string, value: string, ttl?: number) => {
+              if (ttl) await cache.set(key, value, { ex: ttl });
+              else await cache.set(key, value);
+            },
+            delete: async (key: string) => {
+              await cache.del(key);
+            },
+          },
+        }
+      : {}),
     advanced: {
       ipAddress: {
         disableIpTracking: true,
